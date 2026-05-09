@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WORLD, BEE, HIVE, WASP, WAVE, FLOWER, TIMER, WORKER, TOWER, XP, BUTTERFLY, SPIDER, WEB, WIND, pickFlowerType } from '../constants.js';
+import { WORLD, BEE, HIVE, WASP, WAVE, FLOWER, TIMER, WORKER, TOWER, XP, BUTTERFLY, SPIDER, WEB, WIND, BREAKABLE, pickFlowerType } from '../constants.js';
 import MetaSave from '../systems/MetaSave.js';
 import Flower from '../entities/Flower.js';
 import Hive from '../entities/Hive.js';
@@ -14,7 +14,8 @@ import HunterWasp from '../entities/HunterWasp.js';
 import RaiderWasp from '../entities/RaiderWasp.js';
 import ResinTrap from '../towers/ResinTrap.js';
 import GuardPost from '../towers/GuardPost.js';
-import XpGem from '../entities/XpGem.js';
+import Pickup from '../entities/Pickup.js';
+import Breakable from '../entities/Breakable.js';
 import HUD from '../ui/HUD.js';
 import BuildMenu from '../ui/BuildMenu.js';
 import LevelUpMenu from '../ui/LevelUpMenu.js';
@@ -46,7 +47,8 @@ export default class GameScene extends Phaser.Scene {
     this.wasps = this.physics.add.group();
     this.stingers = this.physics.add.group();
     this.workers = this.physics.add.group();
-    this.xpGems = this.physics.add.group();
+    this.pickups = this.physics.add.group();
+    this.breakables = this.physics.add.group();
     this._towerList = [];
     this.butterflies = this.physics.add.group();
     this.spiders = this.physics.add.group();
@@ -80,6 +82,12 @@ export default class GameScene extends Phaser.Scene {
       loop: true,
     });
 
+    this.time.addEvent({
+      delay: BREAKABLE.SPAWN_DELAY,
+      callback: () => this._spawnBreakable(),
+      loop: true,
+    });
+
     this.player = new PlayerBee(
       this,
       this.hiveX,
@@ -91,6 +99,14 @@ export default class GameScene extends Phaser.Scene {
           const d = Phaser.Math.Distance.Between(x, y, w.x, w.y);
           if (d < nearestDist) { nearest = w; nearestDist = d; }
         });
+        
+        // Also target breakables
+        this.breakables.getChildren().forEach(b => {
+          if (!b.active) return;
+          const d = Phaser.Math.Distance.Between(x, y, b.x, b.y);
+          if (d < nearestDist) { nearest = b; nearestDist = d; }
+        });
+
         if (!nearest) return false;
         const s = new Stinger(this, x, y, damage, range, speed);
         this.stingers.add(s);
@@ -122,10 +138,16 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    this.physics.add.overlap(this.player, this.xpGems, (player, gem) => {
-      this._collectXp(gem.xpValue);
-      gem.destroy();
+    this.physics.add.overlap(this.player, this.pickups, (player, pickup) => {
+      pickup.onCollect(player, this);
     });
+
+    this.physics.add.overlap(this.stingers, this.breakables, (stinger, breakable) => {
+      stinger.destroy();
+      breakable.takeDamage(stinger.damage);
+    });
+
+    this.physics.add.collider(this.wasps, this.wasps);
 
     this.waveManager = new WaveManager({
       firstWaveDelay: WAVE.FIRST_WAVE_DELAY,
@@ -158,7 +180,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.stingers, this.wasps, (stinger, wasp) => {
       stinger.destroy();
       if (wasp.takeDamage(stinger.damage)) {
-        this._dropXp(wasp.x, wasp.y);
+        this._dropPickup(wasp.x, wasp.y, 'xp');
       }
     });
 
@@ -182,7 +204,6 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.wasps, this.hive, (a, b) => {
       const wasp = a.waspType ? a : b;
       const hive = a.waspType ? b : a;
-      if (wasp.waspType !== 'raider') return;
       if (wasp.isRetreating) return;
       
       const now = this._gameTime;
@@ -228,15 +249,14 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.world.resume();
 
-    const isSlowMode = this.buildMenu.visible;
+    const isSlowMode = this.buildMenu.visible || this._placing !== null;
     const timeScale = isSlowMode ? 0.1 : 1.0;
     this.physics.world.timeScale = 1 / timeScale;
+    this.time.timeScale = timeScale; // Scales the SAP_CONVERSION timer!
 
     const scaledDelta = delta * timeScale;
     this._gameTime += scaledDelta;
-    if (!isSlowMode) {
-      this._playTime += delta;
-    }
+    this._playTime += scaledDelta;
 
     const workerCount = this.workers.getChildren().filter(w => w.alive).length;
     if (this.hud) this.hud.update(this._playTime, this.waveManager.getWaveNumber(), workerCount, this.level, this.xp, this.reqXp);
@@ -306,9 +326,9 @@ export default class GameScene extends Phaser.Scene {
     if (wave) this._spawnWave(wave);
   }
 
-  _dropXp(x, y) {
-    const gem = new XpGem(this, x, y, XP.WASP_KILL);
-    this.xpGems.add(gem);
+  _dropPickup(x, y, type) {
+    const pickup = new Pickup(this, x, y, type);
+    this.pickups.add(pickup);
   }
 
   _collectXp(val) {
@@ -322,9 +342,9 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  _spawnFlower(x, y) {
+  _spawnFlower(x, y, initialBloom = false) {
     const type = pickFlowerType(Phaser.Math.Between(1, 100));
-    const f = new Flower(this, x, y, type);
+    const f = new Flower(this, x, y, type, initialBloom);
     f.onDead = () => {
       this.time.delayedCall(FLOWER.RESPAWN_DELAY, () => {
         if (!this._ended) {
@@ -344,7 +364,7 @@ export default class GameScene extends Phaser.Scene {
     for (let i = 0; i < FLOWER.INITIAL_COUNT; i++) {
       const x = Phaser.Math.Between(100, WORLD.WIDTH - 100);
       const y = Phaser.Math.Between(100, WORLD.HEIGHT - 100);
-      this._spawnFlower(x, y);
+      this._spawnFlower(x, y, true);
     }
   }
 
@@ -359,6 +379,18 @@ export default class GameScene extends Phaser.Scene {
       const y = Phaser.Math.Between(200, WORLD.HEIGHT - 200);
       this.spiders.add(new Spider(this, x, y));
     }
+    // Initial breakables
+    for (let i = 0; i < 3; i++) {
+      this._spawnBreakable();
+    }
+  }
+
+  _spawnBreakable() {
+    if (this.breakables.countActive(true) >= BREAKABLE.MAX_COUNT) return;
+    const x = Phaser.Math.Between(100, WORLD.WIDTH - 100);
+    const y = Phaser.Math.Between(100, WORLD.HEIGHT - 100);
+    const b = new Breakable(this, x, y);
+    this.breakables.add(b);
   }
 
   _placeWeb(f1, f2) {

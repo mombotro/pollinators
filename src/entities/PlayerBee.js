@@ -21,7 +21,7 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     this._stingerRange = BEE.STINGER_RANGE;
     this._stingerSpeed = BEE.STINGER_SPEED;
     this.armor = 0;
-    this.setDrag(400, 400);
+    this.setDrag(800, 800);
   }
 
   update(time, delta) {
@@ -42,8 +42,13 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
 
     if (ax !== 0 && ay !== 0) { ax *= 0.707; ay *= 0.707; }
 
-    const accel = this._speed * 5;
+    const accel = this._speed * 10;
     this.setAcceleration(ax * accel, ay * accel);
+
+    if (this.body.velocity.lengthSq() > 10) {
+      const targetRotation = this.body.velocity.angle() + Math.PI / 2;
+      this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, targetRotation, 0.15);
+    }
   }
 
   _autoFire(time) {

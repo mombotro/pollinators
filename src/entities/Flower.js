@@ -4,7 +4,7 @@ import { FLOWER, FLOWER_TYPES } from '../constants.js';
 const STATE = { YOUNG: 'young', MATURE: 'mature', OLD: 'old', DEAD: 'dead' };
 
 export default class Flower extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, type = 'COMMON') {
+  constructor(scene, x, y, type = 'COMMON', initialBloom = false) {
     super(scene, x, y, 'flower');
     scene.add.existing(this);
     // Static body assigned by staticGroup.add() in GameScene — do NOT call physics.add.existing here
@@ -20,7 +20,11 @@ export default class Flower extends Phaser.Physics.Arcade.Sprite {
     this.pollenCollected = false;
     this.claimedBy       = null;
 
-    this._applyYoungVisuals();
+    if (initialBloom) {
+      this._enterMature();
+    } else {
+      this._applyYoungVisuals();
+    }
   }
 
   get flowerType()  { return this._type; }

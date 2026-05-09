@@ -20,7 +20,7 @@ export default class MenuScene extends Phaser.Scene {
 
     btnStart.on('pointerover', () => btnStart.setColor('#ffffff'));
     btnStart.on('pointerout',  () => btnStart.setColor('#ffd700'));
-    btnStart.on('pointerdown', () => this.scene.start('PlacementScene'));
+    btnStart.on('pointerdown', () => this.scene.start('GameScene'));
 
     const btnUpgrades = this.add.text(cx, cy + 120, '[ UPGRADES ]', {
       fontSize: '28px', color: '#ffd700',

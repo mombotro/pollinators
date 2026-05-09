@@ -126,3 +126,14 @@ export const WIND = {
   SHIFT_INTERVAL: 10000, // ms between wind direction/strength changes
   LERP_RATE: 0.004,      // per-frame lerp rate toward new wind target (~12s to fully shift)
 };
+
+export const BREAKABLE = {
+  HP: 3,                 // health of the breakable object
+  SPAWN_DELAY: 20000,    // ms between spawn attempts
+  MAX_COUNT: 10,         // maximum breakables on the map
+};
+
+export const PICKUP = {
+  HEAL_AMOUNT: 1,        // hp restored
+  LIFETIME: 15000,       // ms before pickup disappears
+};

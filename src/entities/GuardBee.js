@@ -13,6 +13,7 @@ export default class GuardBee extends Phaser.Physics.Arcade.Sprite {
     this.alive = true;
     this._post = post;
     this._lastFired = 0;
+    this.setDrag(800, 800);
   }
 
   update(time, wasps, stingers) {
@@ -22,7 +23,7 @@ export default class GuardBee extends Phaser.Physics.Arcade.Sprite {
     const angle = (time / 2000) * Math.PI * 2;
     const tx = this._post.x + Math.cos(angle) * 44;
     const ty = this._post.y + Math.sin(angle) * 44;
-    this.scene.physics.moveToObject(this, { x: tx, y: ty }, TOWER.GUARD_BEE_SPEED);
+    this._movePhysics(tx, ty, TOWER.GUARD_BEE_SPEED);
 
     // Auto-fire at nearest wasp in range
     if (time - this._lastFired < TOWER.GUARD_BEE_RATE) return;
@@ -37,5 +38,22 @@ export default class GuardBee extends Phaser.Physics.Arcade.Sprite {
     stingers.add(s);
     s.launch(nearest.x, nearest.y);
     this._lastFired = time;
+  }
+
+  _movePhysics(tx, ty, speed) {
+    this.setMaxVelocity(speed, speed);
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, tx, ty);
+    if (dist > 5) {
+      const ax = (tx - this.x) / dist;
+      const ay = (ty - this.y) / dist;
+      this.setAcceleration(ax * speed * 10, ay * speed * 10);
+    } else {
+      this.setAcceleration(0, 0);
+    }
+
+    if (this.body.velocity.lengthSq() > 10) {
+      const targetRotation = this.body.velocity.angle() + Math.PI / 2;
+      this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, targetRotation, 0.15);
+    }
   }
 }

@@ -3,13 +3,12 @@ import Phaser from 'phaser';
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
 
+  preload() {
+    this.load.image('player-bee', 'bee.png');
+  }
+
   create() {
     const g = this.make.graphics({ x: 0, y: 0, add: false });
-
-    // player-bee: yellow circle
-    g.fillStyle(0xffd700);
-    g.fillCircle(16, 16, 14);
-    g.generateTexture('player-bee', 32, 32);
 
     // hunter-wasp: orange with black stripes
     g.clear();
@@ -50,12 +49,6 @@ export default class BootScene extends Phaser.Scene {
     g.fillStyle(0xffffff);
     g.fillRect(0, 0, 8, 3);
     g.generateTexture('stinger', 8, 3);
-
-    // worker-bee: smaller yellow circle
-    g.clear();
-    g.fillStyle(0xffcc00);
-    g.fillCircle(12, 12, 10);
-    g.generateTexture('worker-bee', 24, 24);
 
     // guard-bee: blue circle
     g.clear();
@@ -118,6 +111,23 @@ export default class BootScene extends Phaser.Scene {
     g.lineBetween(7, 7, 41, 41);
     g.lineBetween(41, 7, 7, 41);
     g.generateTexture('web', 48, 48);
+
+    // breakable: brown crate
+    g.clear();
+    g.fillStyle(0x8b4513);
+    g.fillRect(0, 0, 32, 32);
+    g.lineStyle(2, 0x5c2e0b, 1);
+    g.strokeRect(1, 1, 30, 30);
+    g.lineBetween(2, 2, 30, 30);
+    g.lineBetween(2, 30, 30, 2);
+    g.generateTexture('breakable', 32, 32);
+
+    // health-pickup: red cross
+    g.clear();
+    g.fillStyle(0xff0000);
+    g.fillRect(4, 0, 4, 12);
+    g.fillRect(0, 4, 12, 4);
+    g.generateTexture('health-pickup', 12, 12);
 
     g.destroy();
     this.scene.start('MenuScene');

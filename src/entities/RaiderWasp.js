@@ -14,6 +14,7 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
     this.isRetreating = false;
     this.retreatTarget = null;
     this.lastHit = 0;
+    this.setDrag(800, 800);
   }
 
   retreat() {
@@ -30,7 +31,7 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
       const speed = time < this.slowedUntil
         ? WASP.RAIDER_SPEED * TOWER.RESIN_TRAP_SLOW
         : WASP.RAIDER_SPEED;
-      this.scene.physics.moveToObject(this, this.retreatTarget, speed);
+      this._movePhysics(this.retreatTarget.x, this.retreatTarget.y, speed);
       if (this.x < -200 || this.x > 3000 || this.y < -200 || this.y > 2000) {
         this.destroy();
       }
@@ -44,7 +45,24 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
     const speed = time < this.slowedUntil
       ? WASP.RAIDER_SPEED * TOWER.RESIN_TRAP_SLOW
       : WASP.RAIDER_SPEED;
-    this.scene.physics.moveToObject(this, this._target, speed);
+    this._movePhysics(this._target.x, this._target.y, speed);
+  }
+
+  _movePhysics(tx, ty, speed) {
+    this.setMaxVelocity(speed, speed);
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, tx, ty);
+    if (dist > 5) {
+      const ax = (tx - this.x) / dist;
+      const ay = (ty - this.y) / dist;
+      this.setAcceleration(ax * speed * 10, ay * speed * 10);
+    } else {
+      this.setAcceleration(0, 0);
+    }
+    
+    if (this.body.velocity.lengthSq() > 10) {
+      const targetRotation = this.body.velocity.angle() + Math.PI / 2;
+      this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, targetRotation, 0.15);
+    }
   }
 
   takeDamage(amount) {

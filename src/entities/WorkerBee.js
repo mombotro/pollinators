@@ -5,8 +5,9 @@ const STATE = { SEEK: 'seek', COLLECT: 'collect', RETURN: 'return' };
 
 export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'worker-bee');
+    super(scene, x, y, 'player-bee');
     scene.add.existing(this);
+    this.setScale(0.6);
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
     this.hp = WORKER.HP;
@@ -17,6 +18,7 @@ export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
     this._target = null;
     this._hive = null;
     this._flowers = null;
+    this.setDrag(800, 800);
   }
 
   // Call after construction. hive = Hive sprite, flowers = staticGroup.
@@ -43,11 +45,11 @@ export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
       const d = Phaser.Math.Distance.Between(this.x, this.y, f.x, f.y);
       if (d < nearestDist) { nearest = f; nearestDist = d; }
     });
-    if (!nearest) { this.setVelocity(0, 0); return; }
+    if (!nearest) { this.setAcceleration(0, 0); return; }
     nearest.claimedBy = this;
     this._target = nearest;
     this._state = STATE.COLLECT;
-    this.scene.physics.moveToObject(this, this._target, WORKER.SPEED);
+    this._movePhysics(this._target.x, this._target.y, WORKER.SPEED);
   }
 
   _collectSap() {
@@ -59,7 +61,7 @@ export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
     }
     const dist = Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y);
     if (dist > 24) {
-      this.scene.physics.moveToObject(this, this._target, WORKER.SPEED);
+      this._movePhysics(this._target.x, this._target.y, WORKER.SPEED);
       return;
     }
     // Arrived — collect as much as capacity allows
@@ -68,19 +70,36 @@ export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
     this._target.claimedBy = null;
     this._target = null;
     this._state = STATE.RETURN;
-    this.scene.physics.moveToObject(this, this._hive, WORKER.SPEED);
+    this._movePhysics(this._hive.x, this._hive.y, WORKER.SPEED);
   }
 
   _returnToHive(resources) {
     const dist = Phaser.Math.Distance.Between(this.x, this.y, this._hive.x, this._hive.y);
     if (dist > 32) {
-      this.scene.physics.moveToObject(this, this._hive, WORKER.SPEED);
+      this._movePhysics(this._hive.x, this._hive.y, WORKER.SPEED);
       return;
     }
     // Deposit directly into pending sap pool
     resources.addPendingSap(this._sap);
     this._sap = 0;
     this._state = STATE.SEEK;
+  }
+
+  _movePhysics(tx, ty, speed) {
+    this.setMaxVelocity(speed, speed);
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, tx, ty);
+    if (dist > 5) {
+      const ax = (tx - this.x) / dist;
+      const ay = (ty - this.y) / dist;
+      this.setAcceleration(ax * speed * 10, ay * speed * 10);
+    } else {
+      this.setAcceleration(0, 0);
+    }
+    
+    if (this.body.velocity.lengthSq() > 10) {
+      const targetRotation = this.body.velocity.angle() + Math.PI / 2;
+      this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, targetRotation, 0.15);
+    }
   }
 
   // Returns true if worker died.

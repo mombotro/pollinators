@@ -10,6 +10,7 @@ export default class Spider extends Phaser.Physics.Arcade.Sprite {
     this._target = null;
     this._dwelling = false;
     this._dwellStart = 0;
+    this.setDrag(800, 800);
   }
 
   // flowers: Phaser staticGroup
@@ -19,16 +20,16 @@ export default class Spider extends Phaser.Physics.Arcade.Sprite {
       this._findTarget(flowers);
     }
     if (!this._target) {
-      this.setVelocity(0, 0);
+      this.setAcceleration(0, 0);
       return;
     }
 
     const dist = Phaser.Math.Distance.Between(this.x, this.y, this._target.x, this._target.y);
     if (dist > 40) {
       this._dwelling = false;
-      this.scene.physics.moveToObject(this, this._target, SPIDER.SPEED);
+      this._movePhysics(this._target.x, this._target.y, SPIDER.SPEED);
     } else {
-      this.setVelocity(0, 0);
+      this.setAcceleration(0, 0);
       if (!this._dwelling) {
         this._dwelling = true;
         this._dwellStart = time;
@@ -59,5 +60,17 @@ export default class Spider extends Phaser.Physics.Arcade.Sprite {
       if (d < nearestDist) { nearest = f; nearestDist = d; }
     });
     this._target = nearest;
+  }
+
+  _movePhysics(tx, ty, speed) {
+    this.setMaxVelocity(speed, speed);
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, tx, ty);
+    if (dist > 5) {
+      const ax = (tx - this.x) / dist;
+      const ay = (ty - this.y) / dist;
+      this.setAcceleration(ax * speed * 10, ay * speed * 10);
+    } else {
+      this.setAcceleration(0, 0);
+    }
   }
 }

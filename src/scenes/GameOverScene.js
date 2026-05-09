@@ -5,10 +5,11 @@ export default class GameOverScene extends Phaser.Scene {
   constructor() { super('GameOverScene'); }
 
   init(data) {
-    this.won          = data.won          ?? false;
-    this.score        = data.score        ?? 0;
-    this.waves        = data.waves        ?? 0;
-    this.timeSurvived = data.timeSurvived ?? 0;
+    this.won              = data.won              ?? false;
+    this.score            = data.score            ?? 0;
+    this.waves            = data.waves            ?? 0;
+    this.timeSurvived     = data.timeSurvived     ?? 0;
+    this.wonByDestruction = data.wonByDestruction ?? false;
 
     const earned = Math.floor(this.score / 10);
     MetaSave.addJelly(earned);
@@ -28,9 +29,14 @@ export default class GameOverScene extends Phaser.Scene {
     const s28 = { fontSize: '28px', color: '#ffffff' };
     const sGold = { fontSize: '32px', color: '#ffd700' };
 
-    this.add.text(cx, 120, this.won ? 'YOU WIN!' : 'HIVE DESTROYED', {
+    const headline = this.wonByDestruction
+      ? 'WASP HIVE DESTROYED'
+      : this.won ? 'YOU WIN!' : 'HIVE DESTROYED';
+    const headlineColor = (this.won || this.wonByDestruction) ? '#ffd700' : '#ff4444';
+
+    this.add.text(cx, 120, headline, {
       fontSize: '56px',
-      color: this.won ? '#ffd700' : '#ff4444',
+      color: headlineColor,
       fontStyle: 'bold',
     }).setOrigin(0.5);
 

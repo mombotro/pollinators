@@ -39,7 +39,7 @@ export default class WorkerBee extends Phaser.Physics.Arcade.Sprite {
     // Find nearest unclaimed flower with sap
     let nearest = null, nearestDist = Infinity;
     this._flowers.getChildren().forEach(f => {
-      if (!f.active || f.sapRemaining <= 0 || f.claimedBy || f.state === 'young') return;
+      if (!f.active || f.sapRemaining <= 0 || f.claimedBy || f.lifecycle === 'young') return;
       const d = Phaser.Math.Distance.Between(this.x, this.y, f.x, f.y);
       if (d < nearestDist) { nearest = f; nearestDist = d; }
     });

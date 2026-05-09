@@ -23,8 +23,8 @@ export default class Flower extends Phaser.Physics.Arcade.Sprite {
     this._applyYoungVisuals();
   }
 
-  get type()  { return this._type; }
-  get state() { return this._state; }
+  get flowerType()  { return this._type; }
+  get lifecycle() { return this._state; }
 
   update(time) {
     switch (this._state) {

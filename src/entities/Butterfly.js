@@ -36,7 +36,7 @@ export default class Butterfly extends Phaser.Physics.Arcade.Sprite {
 
     // Auto-pollinate mature flowers in contact range
     flowers.getChildren().forEach(flower => {
-      if (!flower.active || flower.pollenCollected || flower.state === 'young') return;
+      if (!flower.active || flower.pollenCollected || flower.lifecycle === 'young') return;
       const d = Phaser.Math.Distance.Between(this.x, this.y, flower.x, flower.y);
       if (d < 26) {
         flower.collectPollen();
@@ -48,7 +48,7 @@ export default class Butterfly extends Phaser.Physics.Arcade.Sprite {
   _seekAromatic(flowers) {
     let nearest = null, nearestDist = FLOWER.AROMATIC_RADIUS;
     flowers.getChildren().forEach(f => {
-      if (!f.active || f.type !== 'AROMATIC' || f.state !== 'mature') return;
+      if (!f.active || f.flowerType !== 'AROMATIC' || f.lifecycle !== 'mature') return;
       const d = Phaser.Math.Distance.Between(this.x, this.y, f.x, f.y);
       if (d < nearestDist) { nearest = f; nearestDist = d; }
     });

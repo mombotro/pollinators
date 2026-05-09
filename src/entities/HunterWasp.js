@@ -16,11 +16,31 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
 
   setTarget(target) { this._target = target; }
 
+  setFlankWaypoint(x, y) { this._flankWaypoint = { x, y }; }
+
   update(time, windVec) {
+    if (this._flankWaypoint) {
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, this._flankWaypoint.x, this._flankWaypoint.y);
+      if (dist <= 50) {
+        this._flankWaypoint = null;
+      } else {
+        const speed = WASP.HUNTER_SPEED * (this._speedMult ?? 1);
+        this.setMaxVelocity(speed, speed);
+        const ax = (this._flankWaypoint.x - this.x) / dist;
+        const ay = (this._flankWaypoint.y - this.y) / dist;
+        this.setAcceleration(ax * speed * 10, ay * speed * 10);
+        if (this.body.velocity.lengthSq() > 10) {
+          this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, this.body.velocity.angle() + Math.PI / 2, 0.15);
+        }
+        return;
+      }
+    }
+
     if (this.isRetreating && this.retreatTarget) {
+      const baseSpeed = WASP.HUNTER_SPEED * (this._speedMult ?? 1);
       const speed = time < this.slowedUntil
-        ? WASP.HUNTER_SPEED * TOWER.RESIN_TRAP_SLOW
-        : WASP.HUNTER_SPEED;
+        ? baseSpeed * TOWER.RESIN_TRAP_SLOW
+        : baseSpeed;
       this.setMaxVelocity(speed, speed);
       const dist = Phaser.Math.Distance.Between(this.x, this.y, this.retreatTarget.x, this.retreatTarget.y);
       if (dist > 5) {
@@ -66,10 +86,11 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
       if (windVec) this.body.setVelocity(-windVec.x, -windVec.y);
       return;
     }
+    const baseSpeed = WASP.HUNTER_SPEED * (this._speedMult ?? 1);
     const speed = time < this.slowedUntil
-      ? WASP.HUNTER_SPEED * TOWER.RESIN_TRAP_SLOW
-      : WASP.HUNTER_SPEED;
-    
+      ? baseSpeed * TOWER.RESIN_TRAP_SLOW
+      : baseSpeed;
+
     this.setMaxVelocity(speed, speed);
     const dist = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
     if (dist > 5) {

@@ -17,6 +17,8 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
     this.setDrag(800, 800);
   }
 
+  setFlankWaypoint(x, y) { this._flankWaypoint = { x, y }; }
+
   retreat() {
     this.isRetreating = true;
     const angle = Phaser.Math.Angle.Between(this._hive.x, this._hive.y, this.x, this.y);
@@ -27,10 +29,22 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(time, windVec) {
+    if (this._flankWaypoint) {
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, this._flankWaypoint.x, this._flankWaypoint.y);
+      if (dist <= 50) {
+        this._flankWaypoint = null;
+      } else {
+        const speed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
+        this._movePhysics(this._flankWaypoint.x, this._flankWaypoint.y, speed);
+        return;
+      }
+    }
+
     if (this.isRetreating && this.retreatTarget) {
+      const baseSpeed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
       const speed = time < this.slowedUntil
-        ? WASP.RAIDER_SPEED * TOWER.RESIN_TRAP_SLOW
-        : WASP.RAIDER_SPEED;
+        ? baseSpeed * TOWER.RESIN_TRAP_SLOW
+        : baseSpeed;
       this._movePhysics(this.retreatTarget.x, this.retreatTarget.y, speed);
       if (this.x < -200 || this.x > 3000 || this.y < -200 || this.y > 2000) {
         this.destroy();
@@ -42,9 +56,10 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
     if (!this._target || !this._target.active) this._target = this._hive;
     if (!this._target || !this._target.active) return;
 
+    const baseSpeed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
     const speed = time < this.slowedUntil
-      ? WASP.RAIDER_SPEED * TOWER.RESIN_TRAP_SLOW
-      : WASP.RAIDER_SPEED;
+      ? baseSpeed * TOWER.RESIN_TRAP_SLOW
+      : baseSpeed;
     this._movePhysics(this._target.x, this._target.y, speed);
   }
 

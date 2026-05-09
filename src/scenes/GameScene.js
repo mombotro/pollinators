@@ -10,8 +10,7 @@ import PlayerBee from '../entities/PlayerBee.js';
 import Stinger from '../entities/Stinger.js';
 import WorkerBee from '../entities/WorkerBee.js';
 import WaveManager from '../systems/WaveManager.js';
-import HunterWasp from '../entities/HunterWasp.js';
-import RaiderWasp from '../entities/RaiderWasp.js';
+import WaspHiveSystem from '../systems/WaspHiveSystem.js';
 import ResinTrap from '../towers/ResinTrap.js';
 import GuardPost from '../towers/GuardPost.js';
 import Pickup from '../entities/Pickup.js';
@@ -156,6 +155,13 @@ export default class GameScene extends Phaser.Scene {
       countIncrement: WAVE.COUNT_INCREMENT,
     });
 
+    this.waspHiveSystem = new WaspHiveSystem({
+      scene: this,
+      playerHiveX: this.hiveX,
+      playerHiveY: this.hiveY,
+      onDestroyed: () => this._endGame(true, true),
+    });
+
     // Apply meta-progression upgrades from save
     const _metaSave = MetaSave.load();
     const _u = _metaSave.upgrades;
@@ -184,6 +190,13 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
+    this.physics.add.overlap(this.stingers, this.waspHiveSystem.hiveGroup, (stinger, waspHive) => {
+      stinger.destroy();
+      if (waspHive.takeDamage(stinger.damage)) {
+        this._endGame(true, true);
+      }
+    });
+
     this.physics.add.overlap(this.wasps, this.player, (a, b) => {
       const wasp = a.waspType ? a : b;
       const bee  = a.waspType ? b : a;
@@ -208,6 +221,7 @@ export default class GameScene extends Phaser.Scene {
       const sap = this.resources.getSapCarried('player');
       if (sap > 0) {
         this.resources.stealSap('player', Math.max(1, WASP.SAP_STEAL - this.player.armor));
+        this.waspHiveSystem.onHoneyStolen(Math.max(1, WASP.SAP_STEAL - this.player.armor));
       } else {
         if (bee.takeDamage(WASP.DAMAGE)) this._onPlayerDeath();
       }
@@ -224,6 +238,7 @@ export default class GameScene extends Phaser.Scene {
 
       if (this.resources.getHoney() > 0) {
         this.resources.stealHoney(WASP.HONEY_STEAL);
+        this.waspHiveSystem.onHoneyStolen(WASP.HONEY_STEAL);
         wasp.retreat();
       } else {
         if (hive.takeDamage(WASP.DAMAGE)) this._endGame(false);
@@ -335,7 +350,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const wave = this.waveManager.update(this._playTime);
-    if (wave) this._spawnWave(wave);
+    if (wave) this.waspHiveSystem.spawnWave(wave);
+    this.waspHiveSystem.update(this._gameTime);
   }
 
   _dropPickup(x, y, type) {
@@ -421,32 +437,6 @@ export default class GameScene extends Phaser.Scene {
     this.wasps.getChildren().forEach(applyTo);
     this.workers.getChildren().forEach(w => { if (w.alive) applyTo(w); });
     this.butterflies.getChildren().forEach(applyTo);
-  }
-
-  _spawnWave(waveSpec) {
-    for (let i = 0; i < waveSpec.hunterCount; i++) {
-      const { x, y } = this._edgePoint();
-      const w = new HunterWasp(this, x, y);
-      w.setTarget(this.player);
-      this.wasps.add(w);
-    }
-    for (let i = 0; i < waveSpec.raiderCount; i++) {
-      const { x, y } = this._edgePoint();
-      const guardPosts = this._towerList.filter(t => t.towerType === 'guard' && t.active && t.hp > 0);
-      const target = guardPosts.length > 0 && Math.random() < 0.4
-        ? Phaser.Utils.Array.GetRandom(guardPosts)
-        : this.hive;
-      this.wasps.add(new RaiderWasp(this, x, y, this.hive, target));
-    }
-  }
-
-  _edgePoint() {
-    const edge = Phaser.Math.Between(0, 3);
-    const w = WORLD.WIDTH, h = WORLD.HEIGHT;
-    if (edge === 0) return { x: Phaser.Math.Between(0, w), y: 0 };
-    if (edge === 1) return { x: Phaser.Math.Between(0, w), y: h };
-    if (edge === 2) return { x: 0,                          y: Phaser.Math.Between(0, h) };
-    return             { x: w,                              y: Phaser.Math.Between(0, h) };
   }
 
   _checkWorkerHunterCollisions(time) {

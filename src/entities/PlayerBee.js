@@ -26,6 +26,7 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     this.isDashing = false;
     this.dashEndTime = 0;
     this.lastDashTime = 0;
+    this._dashTargetRotation = null;
     this._space = scene.input.keyboard.addKey('SPACE');
   }
 
@@ -35,7 +36,10 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     if (this.isDashing) {
       if (time >= this.dashEndTime) {
         this.isDashing = false;
+        this._dashTargetRotation = null;
         this.clearTint();
+      } else if (this._dashTargetRotation !== null) {
+        this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, this._dashTargetRotation, 0.5);
       }
     } else {
       if (Phaser.Input.Keyboard.JustDown(this._space) && time - this.lastDashTime >= BEE.DASH_COOLDOWN) {
@@ -51,9 +55,7 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
           ? Math.atan2(ay, ax)
           : this.rotation + Math.PI / 2;
 
-        // Snap rotation so stinger faces the dash direction immediately
-        this.rotation = dashAngle - Math.PI / 2;
-
+        this._dashTargetRotation = dashAngle - Math.PI / 2;
         this.isDashing = true;
         this.dashEndTime = time + BEE.DASH_DURATION;
         this.lastDashTime = time;

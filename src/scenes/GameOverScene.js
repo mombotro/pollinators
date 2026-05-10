@@ -11,7 +11,9 @@ export default class GameOverScene extends Phaser.Scene {
     this.timeSurvived     = data.timeSurvived     ?? 0;
     this.wonByDestruction = data.wonByDestruction ?? false;
 
-    const earned = Math.floor(this.score / 10);
+    const earned = this.wonByDestruction
+      ? Math.max(10, Math.round(200 * (1 - this.timeSurvived / 600)))
+      : Math.floor(this.score / 10);
     MetaSave.addJelly(earned);
     this.earned = earned;
 
@@ -40,12 +42,17 @@ export default class GameOverScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(cx, 210, `Score: ${this.score}`, sGold).setOrigin(0.5);
-    this.add.text(cx, 260, `Waves survived: ${this.waves}`, s28).setOrigin(0.5);
-
     const mins = Math.floor(this.timeSurvived / 60);
     const secs = String(this.timeSurvived % 60).padStart(2, '0');
-    this.add.text(cx, 300, `Time: ${mins}:${secs}`, s28).setOrigin(0.5);
+
+    if (this.wonByDestruction) {
+      this.add.text(cx, 210, `Destroyed in ${mins}:${secs}`, sGold).setOrigin(0.5);
+      this.add.text(cx, 260, `Waves survived: ${this.waves}`, s28).setOrigin(0.5);
+    } else {
+      this.add.text(cx, 210, `Score: ${this.score}`, sGold).setOrigin(0.5);
+      this.add.text(cx, 260, `Waves survived: ${this.waves}`, s28).setOrigin(0.5);
+      this.add.text(cx, 300, `Time: ${mins}:${secs}`, s28).setOrigin(0.5);
+    }
 
     this.add.text(cx, 360, `+${this.earned} Royal Jelly`, {
       fontSize: '36px', color: '#ffcc00', fontStyle: 'bold',

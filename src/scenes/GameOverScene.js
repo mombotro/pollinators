@@ -12,7 +12,7 @@ export default class GameOverScene extends Phaser.Scene {
     this.wonByDestruction = data.wonByDestruction ?? false;
 
     const earned = this.wonByDestruction
-      ? Math.max(10, Math.round(200 * (1 - this.timeSurvived / 600)))
+      ? Math.round(150 + 150 * Math.max(0, 1 - this.timeSurvived / 600))
       : Math.floor(this.score / 10);
     MetaSave.addJelly(earned);
     this.earned = earned;

@@ -121,11 +121,13 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
 
   _autoFire(time) {
     if (!this._onFire || time - this._lastFired < this._stingerRate) return;
-    // When aiming: fire from head toward cursor. Otherwise fire from tail (backward).
     const fireAngle = this._aimAngle !== null
       ? this._aimAngle
       : this.rotation + Math.PI / 2;
-    const fired = this._onFire(this.x, this.y, this._stingerRange, this._stingerDamage, this._stingerSpeed, fireAngle);
+    const offset = this.height * 0.5;
+    const spawnX = this.x + Math.cos(fireAngle) * offset;
+    const spawnY = this.y + Math.sin(fireAngle) * offset;
+    const fired = this._onFire(spawnX, spawnY, this._stingerRange, this._stingerDamage, this._stingerSpeed, fireAngle);
     if (fired) this._lastFired = time;
   }
 

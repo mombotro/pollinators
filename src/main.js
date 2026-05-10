@@ -12,6 +12,12 @@ new Phaser.Game({
   width: 1280,
   height: 720,
   parent: 'game',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720,
+  },
   backgroundColor: '#2d5a1b',
   dom: { createContainer: true },
   input: { gamepad: true },

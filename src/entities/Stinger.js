@@ -16,6 +16,7 @@ export default class Stinger extends Phaser.Physics.Arcade.Sprite {
     const dist  = maxDist ?? BEE.STINGER_RANGE;
     const spd   = speed   ?? BEE.STINGER_SPEED;
     this.setPosition(x, y).setActive(true).setVisible(true);
+    if (this.body) this.body.setEnable(true);
     this.body.reset(x, y);
     const angleRad = Phaser.Math.Angle.Between(x, y, targetX, targetY);
     this.setRotation(angleRad);
@@ -30,6 +31,6 @@ export default class Stinger extends Phaser.Physics.Arcade.Sprite {
   release() {
     if (this._lifetimeEvent) { this._lifetimeEvent.remove(false); this._lifetimeEvent = null; }
     this.setActive(false).setVisible(false);
-    if (this.body) this.body.setVelocity(0, 0);
+    if (this.body) { this.body.setEnable(false); this.body.setVelocity(0, 0); }
   }
 }

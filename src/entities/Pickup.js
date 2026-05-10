@@ -14,6 +14,7 @@ export default class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.type = type;
     this.setTexture(type === 'health' ? 'health-pickup' : 'xp-gem');
     this.setPosition(x, y).setActive(true).setVisible(true);
+    if (this.body) this.body.setEnable(true);
     this.body.reset(x, y);
     this.setVelocity(Phaser.Math.Between(-10, 10), Phaser.Math.Between(-10, 10));
     this.setDrag(10, 10);
@@ -21,7 +22,7 @@ export default class Pickup extends Phaser.Physics.Arcade.Sprite {
 
   release() {
     this.setActive(false).setVisible(false);
-    if (this.body) this.body.setVelocity(0, 0);
+    if (this.body) { this.body.setEnable(false); this.body.setVelocity(0, 0); }
   }
 
   onCollect(player, scene) {

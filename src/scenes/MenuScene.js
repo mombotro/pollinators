@@ -4,6 +4,7 @@ export default class MenuScene extends Phaser.Scene {
   constructor() { super('MenuScene'); }
 
   create() {
+    this._gpAWasDown = false;
     const cx = 640, cy = 360;
 
     this.add.dom(cx, cy - 310).createFromHTML(
@@ -33,5 +34,13 @@ export default class MenuScene extends Phaser.Scene {
     btnUpgrades.on('pointerover', () => btnUpgrades.setColor('#ffffff'));
     btnUpgrades.on('pointerout',  () => btnUpgrades.setColor('#ffd700'));
     btnUpgrades.on('pointerdown', () => this.scene.start('MetaUpgradeScene'));
+  }
+
+  update() {
+    const gp = this.input.gamepad;
+    const pad = gp?.total > 0 ? gp.gamepads.find(p => p?.connected) : null;
+    const aDown = pad?.buttons[0]?.pressed ?? false;
+    if (aDown && !this._gpAWasDown) this.scene.start('GameScene');
+    this._gpAWasDown = aDown;
   }
 }

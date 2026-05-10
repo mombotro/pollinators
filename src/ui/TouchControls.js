@@ -14,10 +14,11 @@ export default class TouchControls {
 
     scene.input.addPointer(1);
 
+    this._hasTouch = false;
     this._gfx = scene.add.graphics().setScrollFactor(0).setDepth(200);
     this._label = scene.add.text(DASH_CX, DASH_CY, 'DASH', {
       fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setAlpha(0.75);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setAlpha(0.75).setVisible(false);
 
     scene.input.on('pointerdown',      this._onDown, this);
     scene.input.on('pointermove',      this._onMove, this);
@@ -27,6 +28,10 @@ export default class TouchControls {
 
   _onDown(ptr) {
     if (!ptr.wasTouch) return;
+    if (!this._hasTouch) {
+      this._hasTouch = true;
+      this._label.setVisible(true);
+    }
     const { x, y } = ptr;
     if (Math.hypot(x - DASH_CX, y - DASH_CY) <= DASH_R) {
       if (!this._dashPtr) {
@@ -69,6 +74,7 @@ export default class TouchControls {
 
   update() {
     this._gfx.clear();
+    if (!this._hasTouch) return;
 
     this._gfx.fillStyle(0xffaa00, 0.45);
     this._gfx.fillCircle(DASH_CX, DASH_CY, DASH_R);

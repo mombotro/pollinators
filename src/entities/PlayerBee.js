@@ -97,7 +97,8 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
   }
 
   _readGamepad() {
-    const pad = this.scene.input.gamepad?.getPad(0);
+    const gp = this.scene.input.gamepad;
+    const pad = gp?.total > 0 ? gp.gamepads.find(p => p?.connected) : null;
     this._gpAxis = { x: 0, y: 0 };
     if (!pad) return;
 
@@ -106,23 +107,23 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     // Left stick + D-pad movement
     let gx = Math.abs(pad.leftStick.x) > DEAD ? pad.leftStick.x : 0;
     let gy = Math.abs(pad.leftStick.y) > DEAD ? pad.leftStick.y : 0;
-    if (pad.left?.pressed)  gx = -1;
-    if (pad.right?.pressed) gx =  1;
-    if (pad.up?.pressed)    gy = -1;
-    if (pad.down?.pressed)  gy =  1;
+    if (pad.buttons[14]?.pressed) gx = -1;
+    if (pad.buttons[15]?.pressed) gx =  1;
+    if (pad.buttons[12]?.pressed) gy = -1;
+    if (pad.buttons[13]?.pressed) gy =  1;
     const len = Math.hypot(gx, gy);
     if (len > 1) { gx /= len; gy /= len; }
     this._gpAxis = { x: gx, y: gy };
 
-    // A button → dash (rising edge)
-    const aDown = pad.A?.pressed ?? false;
+    // A button (index 0) → dash (rising edge)
+    const aDown = pad.buttons[0]?.pressed ?? false;
     if (aDown && !this._gpAWasDown) this._touchDash = true;
     this._gpAWasDown = aDown;
 
-    // Hold RT + right stick → aim
-    const rt = pad.R2?.value ?? 0;
-    const rx = pad.rightStick.x;
-    const ry = pad.rightStick.y;
+    // Hold RT (index 7) + right stick → aim
+    const rt = pad.buttons[7]?.value ?? 0;
+    const rx = pad.axes[2]?.getValue() ?? 0;
+    const ry = pad.axes[3]?.getValue() ?? 0;
     if (rt > 0.5 && Math.hypot(rx, ry) > DEAD) {
       this._aimAngle = Math.atan2(ry, rx);
     }

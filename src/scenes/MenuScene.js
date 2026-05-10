@@ -6,6 +6,10 @@ export default class MenuScene extends Phaser.Scene {
   create() {
     const cx = 640, cy = 360;
 
+    this.add.dom(cx, cy - 220).createFromHTML(
+      '<img src="bee.gif" style="width:160px;height:auto;display:block;">'
+    );
+
     this.add.text(cx, cy - 100, 'PollinHaters', {
       fontSize: '72px', color: '#ffd700', fontStyle: 'bold',
     }).setOrigin(0.5);

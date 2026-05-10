@@ -13,6 +13,7 @@ new Phaser.Game({
   height: 720,
   parent: 'game',
   backgroundColor: '#2d5a1b',
+  dom: { createContainer: true },
   physics: {
     default: 'arcade',
     arcade: { debug: false },

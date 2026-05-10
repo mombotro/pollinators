@@ -124,9 +124,10 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     const fireAngle = this._aimAngle !== null
       ? this._aimAngle
       : this.rotation + Math.PI / 2;
+    const tailAngle = this.rotation + Math.PI / 2;
     const offset = this.height * 0.5;
-    const spawnX = this.x + Math.cos(fireAngle) * offset;
-    const spawnY = this.y + Math.sin(fireAngle) * offset;
+    const spawnX = this.x + Math.cos(tailAngle) * offset;
+    const spawnY = this.y + Math.sin(tailAngle) * offset;
     const fired = this._onFire(spawnX, spawnY, this._stingerRange, this._stingerDamage, this._stingerSpeed, fireAngle);
     if (fired) this._lastFired = time;
   }

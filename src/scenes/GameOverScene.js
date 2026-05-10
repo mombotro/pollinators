@@ -62,12 +62,22 @@ export default class GameOverScene extends Phaser.Scene {
       fontSize: '24px', color: '#aaaaaa',
     }).setOrigin(0.5);
 
-    const btn = this.add.text(cx, 500, '[ BACK TO MENU ]', {
-      fontSize: '28px', color: '#ffd700',
+    this._btn = this.add.text(cx, 500, '[ BACK TO MENU ]', {
+      fontSize: '28px', color: '#ffffff',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    btn.on('pointerover', () => btn.setColor('#ffffff'));
-    btn.on('pointerout',  () => btn.setColor('#ffd700'));
-    btn.on('pointerdown', () => this.scene.start('MenuScene'));
+    this._btn.on('pointerover', () => this._btn.setColor('#ffffff'));
+    this._btn.on('pointerout',  () => this._btn.setColor('#ffd700'));
+    this._btn.on('pointerdown', () => this.scene.start('MenuScene'));
+
+    this._gpAWasDown = false;
+  }
+
+  update() {
+    const gp = this.input.gamepad;
+    const pad = gp?.total > 0 ? gp.gamepads.find(p => p?.connected) : null;
+    const aDown = pad?.buttons[0]?.pressed ?? false;
+    if (aDown && !this._gpAWasDown) this.scene.start('MenuScene');
+    this._gpAWasDown = aDown;
   }
 }

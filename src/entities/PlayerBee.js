@@ -121,11 +121,10 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     if (aDown && !this._gpAWasDown) this._touchDash = true;
     this._gpAWasDown = aDown;
 
-    // Hold RT (index 7) + right stick → aim
-    const rt = pad.buttons[7]?.value ?? 0;
+    // Right stick → aim (RT check removed: Phaser analog threshold unreliable)
     const rx = pad.rightStick.x;
     const ry = pad.rightStick.y;
-    if (rt > 0.5 && Math.hypot(rx, ry) > DEAD) {
+    if (Math.hypot(rx, ry) > DEAD) {
       this._aimAngle = Math.atan2(ry, rx);
     }
   }

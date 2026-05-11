@@ -33,7 +33,7 @@ import SoundSynth from '../systems/SoundSynth.js';
 export default class GameScene extends Phaser.Scene {
   constructor() { super('GameScene'); }
 
-  init(data) {
+  init(data = {}) {
     this.hiveX = data.hiveX ?? 1280;
     this.hiveY = data.hiveY ?? 720;
     this._ended = false;
@@ -347,7 +347,7 @@ export default class GameScene extends Phaser.Scene {
         SoundSynth.play('hive-hit');
         this.resources.stealHoney(WASP.HONEY_STEAL);
         wasp.honeyCarried = WASP.HONEY_STEAL;
-        wasp.setTint(0xffdd00);
+        wasp._startHoneyGlow?.();
         if (typeof wasp.retreat === 'function') wasp.retreat();
       } else {
         this._burst(hive.x, hive.y, 0x6b3a1f, 6);
@@ -496,7 +496,7 @@ export default class GameScene extends Phaser.Scene {
         if (Phaser.Math.Distance.Between(wasp.x, wasp.y, pickup.x, pickup.y) < 30) {
           pickup.release();
           wasp.honeyCarried = PICKUP.HONEY_AMOUNT;
-          wasp.setTint(0xffdd00);
+          wasp._startHoneyGlow?.();
           if (typeof wasp.retreat === 'function') wasp.retreat();
         }
       });

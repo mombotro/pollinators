@@ -48,6 +48,7 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
       } else {
         const speed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
         this._movePhysics(this._flankWaypoint.x, this._flankWaypoint.y, speed);
+        this._separate();
         return;
       }
     }
@@ -56,6 +57,7 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
       const baseSpeed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
       const speed = time < this.slowedUntil ? baseSpeed * TOWER.RESIN_TRAP_SLOW : baseSpeed;
       this._movePhysics(this._poisonTarget.x, this._poisonTarget.y, speed);
+      this._separate();
       return;
     }
 
@@ -113,7 +115,7 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
 
   _separate() {
     if (!this.scene?.wasps) return;
-    const RADIUS = 64, FORCE = 400;
+    const RADIUS = 72, FORCE = 1200;
     let sx = 0, sy = 0;
     this.scene.wasps.getChildren().forEach(other => {
       if (!other.active || other === this) return;

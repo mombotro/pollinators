@@ -35,6 +35,7 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
         if (this.body.velocity.lengthSq() > 10) {
           this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, this.body.velocity.angle() + Math.PI / 2, 0.15);
         }
+        this._separate();
         return;
       }
     }
@@ -54,6 +55,7 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
       if (this.body.velocity.lengthSq() > 10) {
         this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, this.body.velocity.angle() + Math.PI / 2, 0.15);
       }
+      this._separate();
       return;
     }
 
@@ -147,7 +149,7 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
 
   _separate() {
     if (!this.scene?.wasps) return;
-    const RADIUS = 64, FORCE = 400;
+    const RADIUS = 72, FORCE = 1200;
     let sx = 0, sy = 0;
     this.scene.wasps.getChildren().forEach(other => {
       if (!other.active || other === this) return;

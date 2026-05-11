@@ -164,9 +164,10 @@ export default class MetaUpgradeScene extends Phaser.Scene {
     const pad = gp?.total > 0 ? gp.gamepads.find(p => p?.connected) : null;
     if (!pad) return;
 
-    const dirDown = pad.buttons[12]?.pressed || pad.buttons[13]?.pressed;
+    const dirDown = pad.buttons[12]?.pressed || pad.buttons[13]?.pressed ||
+                    Math.abs(pad.leftStick.y) > 0.4;
     if (dirDown && !this._gpDirWas) {
-      const dy = pad.buttons[12]?.pressed ? -1 : 1;
+      const dy = (pad.buttons[12]?.pressed || pad.leftStick.y < -0.4) ? -1 : 1;
       this._gpIdx = (this._gpIdx + dy + this._navObjs.length) % this._navObjs.length;
       this._gpRefresh();
     }

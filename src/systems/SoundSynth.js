@@ -54,6 +54,18 @@ export default class SoundSynth {
         case 'player-hit':
           tone(280, 'sine', 0.11, 0.14, 110);
           break;
+        case 'break':
+          tone(180, 'triangle', 0.06, 0.12, 90);
+          tone(260, 'triangle', 0.08, 0.09, 130, 0.03);
+          break;
+        case 'xp':
+          tone(1050, 'sine', 0.07, 0.09);
+          tone(1400, 'sine', 0.07, 0.07, undefined, 0.05);
+          break;
+        case 'health':
+          tone(660, 'sine', 0.10, 0.12);
+          tone(990, 'sine', 0.09, 0.10, undefined, 0.06);
+          break;
       }
     } catch (e) { /* ignore audio errors */ }
   }

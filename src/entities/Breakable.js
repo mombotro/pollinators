@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BREAKABLE } from '../constants.js';
+import SoundSynth from '../systems/SoundSynth.js';
 
 export default class Breakable extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
@@ -29,6 +30,7 @@ export default class Breakable extends Phaser.Physics.Arcade.Sprite {
   }
 
   _break() {
+    SoundSynth.play('break');
     const type = Math.random() < 0.5 ? 'health' : 'xp';
     this.scene._dropPickup(this.x, this.y, type);
     this.setFrame(5);

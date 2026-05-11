@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { PICKUP, XP } from '../constants.js';
+import SoundSynth from '../systems/SoundSynth.js';
 
 export default class Pickup extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
@@ -32,9 +33,11 @@ export default class Pickup extends Phaser.Physics.Arcade.Sprite {
     if (this.type === 'health') {
       if (player.hp >= player.maxHp) return false;
       player.hp = Math.min(player.maxHp, player.hp + PICKUP.HEAL_AMOUNT);
+      SoundSynth.play('health');
       player.setTint(0x00ff00);
       scene.time.delayedCall(150, () => { if (player.active) player.clearTint(); });
     } else if (this.type === 'xp') {
+      SoundSynth.play('xp');
       scene._collectXp(XP.WASP_KILL);
     } else if (this.type === 'honey') {
       scene.resources.addHoney(PICKUP.HONEY_AMOUNT);

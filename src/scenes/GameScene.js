@@ -177,9 +177,9 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.physics.add.overlap(this.player, this.pickups, (player, pickup) => {
-      this._burst(pickup.x, pickup.y, 0xffff88, 6);
-      SoundSynth.play('pickup');
-      pickup.onCollect(player, this);
+      if (pickup.onCollect(player, this)) {
+        this._burst(pickup.x, pickup.y, 0xffff88, 6);
+      }
     });
 
     this.physics.add.overlap(this.stingers, this.breakables, (stinger, breakable) => {

@@ -40,6 +40,7 @@ export default class Pickup extends Phaser.Physics.Arcade.Sprite {
       SoundSynth.play('xp');
       scene._collectXp(XP.WASP_KILL);
     } else if (this.type === 'honey') {
+      SoundSynth.play('pickup');
       scene.resources.addHoney(PICKUP.HONEY_AMOUNT);
     }
     this.release();

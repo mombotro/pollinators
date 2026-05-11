@@ -175,7 +175,12 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
   takeDamage(amount) {
     this.hp -= amount;
     this.setTint(0xffffff);
-    this.scene.time.delayedCall(80, () => { if (this.active) this.clearTint(); });
+    this.scene.time.delayedCall(80, () => {
+      if (this.active) {
+        if (this.honeyCarried > 0) this.setTint(0xffdd00);
+        else this.clearTint();
+      }
+    });
     if (this.hp <= 0) { this.destroy(); return true; }
     return false;
   }

@@ -347,6 +347,7 @@ export default class GameScene extends Phaser.Scene {
         SoundSynth.play('hive-hit');
         this.resources.stealHoney(WASP.HONEY_STEAL);
         wasp.honeyCarried = WASP.HONEY_STEAL;
+        wasp.setTint(0xffdd00);
         if (typeof wasp.retreat === 'function') wasp.retreat();
       } else {
         this._burst(hive.x, hive.y, 0x6b3a1f, 6);
@@ -487,14 +488,16 @@ export default class GameScene extends Phaser.Scene {
 
     this.wasps.getChildren().forEach(w => w.update(this._gameTime, windVec));
 
-    // Wasps steal dropped honey from the ground
+    // Wasps pick up dropped honey and carry it back to their hive
     this.wasps.getChildren().forEach(wasp => {
-      if (!wasp.active) return;
+      if (!wasp.active || wasp.honeyCarried > 0 || wasp.poisonCarried || wasp.isRetreating) return;
       this.pickups.getChildren().forEach(pickup => {
         if (!pickup.active || pickup.type !== 'honey') return;
         if (Phaser.Math.Distance.Between(wasp.x, wasp.y, pickup.x, pickup.y) < 30) {
-          this.waspHiveSystem.onHoneyStolen(PICKUP.HONEY_AMOUNT);
           pickup.release();
+          wasp.honeyCarried = PICKUP.HONEY_AMOUNT;
+          wasp.setTint(0xffdd00);
+          if (typeof wasp.retreat === 'function') wasp.retreat();
         }
       });
     });

@@ -140,7 +140,12 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
   takeDamage(amount) {
     this.hp -= amount;
     this.setTint(0xffffff);
-    this.scene.time.delayedCall(80, () => { if (this.active) this.clearTint(); });
+    this.scene.time.delayedCall(80, () => {
+      if (this.active) {
+        if (this.honeyCarried > 0) this.setTint(0xffdd00);
+        else this.setTint(0xff8866);
+      }
+    });
     if (this.hp <= 0) { this.destroy(); return true; }
     return false;
   }

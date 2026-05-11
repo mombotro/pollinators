@@ -40,6 +40,8 @@ export default class GameScene extends Phaser.Scene {
     this._gameTime = 0;
     this._playTime = 0;
     this.xp = 0;
+    this.xpFloor = 0;
+    this._xpIncrement = XP.BASE_REQ;
     this.level = 1;
     this.reqXp = XP.BASE_REQ;
     this._playground = data.playground ?? false;
@@ -262,6 +264,7 @@ export default class GameScene extends Phaser.Scene {
       SoundSynth.play('hit');
       if (wasp.takeDamage(stinger.damage)) {
         this._dropPickup(wasp.x, wasp.y, wasp.honeyCarried ? 'honey' : 'xp');
+        if (Math.random() < 0.10) this._dropPickup(wasp.x, wasp.y, 'health');
       }
     });
 
@@ -305,6 +308,7 @@ export default class GameScene extends Phaser.Scene {
         wasp.lastDashedHit = now;
         if (wasp.takeDamage(1)) {
           this._dropPickup(wasp.x, wasp.y, wasp.honeyCarried ? 'honey' : 'xp');
+          if (Math.random() < 0.10) this._dropPickup(wasp.x, wasp.y, 'health');
         }
         return;
       }
@@ -704,9 +708,10 @@ export default class GameScene extends Phaser.Scene {
   _collectXp(val) {
     this.xp += val;
     if (this.xp >= this.reqXp) {
-      this.xp -= this.reqXp;
+      this.xpFloor = this.reqXp;
       this.level++;
-      this.reqXp = Math.floor(this.reqXp * XP.REQ_MULTIPLIER);
+      this._xpIncrement = Math.floor(this._xpIncrement * XP.REQ_MULTIPLIER);
+      this.reqXp = this.xpFloor + this._xpIncrement;
       if (this.buildMenu.visible) this.buildMenu.hide();
       this.levelUpMenu.show(this.upgrades);
     }

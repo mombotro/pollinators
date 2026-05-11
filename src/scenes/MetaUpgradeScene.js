@@ -13,8 +13,9 @@ const UPGRADES = [
   { key: 'START_SOLDIER',     label: 'Start: Soldier', cost: 120, max: 1, desc: 'Begin with 1 soldier bee escort' },
   { key: 'SOLDIER_DMG_META',  label: 'Soldier Damage', cost: 100, max: 3, desc: '+1 soldier damage per level' },
   { key: 'QUICK_RUN_META',    label: 'Quick Run',      cost: 50,  max: 3, desc: 'Survive 1 minute less per level (min 7 min)' },
-  { key: 'LONG_RUN_META',     label: 'Longer Run',     cost: 75,  max: 3, desc: 'Survive 1 minute more per level (max 13 min)' },
-  { key: 'HARD_MODE_META',    label: 'Hard Mode',      cost: 75,  max: 3, desc: '+2 wasps per wave per level (self-challenge)' },
+  { key: 'LONG_RUN_META',     label: 'Longer Run',     cost: 75,  max: 99, desc: 'Survive 5 minutes more per level (no cap)' },
+  { key: 'HARD_MODE_META',    label: 'Hard Mode',      cost: 75,  max: 3,  desc: '+2 wasps per wave per level (self-challenge)' },
+  { key: 'EXTRA_HIVES_META',  label: 'Extra Hive',     cost: 200, max: 2,  desc: '+1 enemy wasp hive per level (harder, more threats)' },
 ];
 
 const ROW_H    = 52;

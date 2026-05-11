@@ -6,7 +6,7 @@ import RaiderWasp from '../entities/RaiderWasp.js';
 import ArcherWasp from '../entities/ArcherWasp.js';
 
 export default class WaspHiveSystem {
-  constructor({ scene, playerHiveX, playerHiveY, onDestroyed }) {
+  constructor({ scene, playerHiveX, playerHiveY, onDestroyed, extraHives = 0 }) {
     this._scene = scene;
     this._playerHiveX = playerHiveX;
     this._playerHiveY = playerHiveY;
@@ -15,12 +15,19 @@ export default class WaspHiveSystem {
     this._lastRegenAt = 0;
     this._lastDefenseAt = -99999;
 
-    const { x, y } = this._randomPosition(playerHiveX, playerHiveY);
-    this._hive = new WaspHive(scene, x, y);
-    this._hive.onDamaged = () => this.spawnOnDamage();
+    this._hives = [];
+    const count = 1 + extraHives;
+    for (let i = 0; i < count; i++) {
+      const { x, y } = this._randomPosition(playerHiveX, playerHiveY);
+      const hive = new WaspHive(scene, x, y);
+      hive.onDamaged = () => this.spawnOnDamage(hive);
+      this._hives.push(hive);
+    }
   }
 
-  get hive() { return this._hive; }
+  // Primary hive (first still alive, or fallback to first)
+  get hive() { return this._hives.find(h => h.hp > 0) ?? this._hives[0]; }
+  get hives() { return this._hives; }
   get honeyStolen() { return this._totalHoneyStolen; }
 
   onHoneyStolen(amount) {
@@ -31,15 +38,14 @@ export default class WaspHiveSystem {
     this._totalHoneyStolen = Math.max(0, this._totalHoneyStolen - amount);
   }
 
-  onHiveAttacked(time) {
-    if (this._hive.hp <= 0) return;
+  onHiveAttacked(time, hive) {
+    const h = hive ?? this._hives[0];
+    if (!h || h.hp <= 0) return;
     if (time - this._lastDefenseAt < 5000) return;
     this._lastDefenseAt = time;
-    const hx = this._hive.x;
-    const hy = this._hive.y;
     const count = 3 + Math.floor(WaspHiveSystem.countMult(this._totalHoneyStolen));
     for (let i = 0; i < count; i++) {
-      const w = new HunterWasp(this._scene, hx, hy);
+      const w = new HunterWasp(this._scene, h.x, h.y);
       w.setTarget(this._scene.player);
       if (Math.random() < WaspHiveSystem.powerChance(this._totalHoneyStolen)) {
         w.hp = 2; w._speedMult = 1.25;
@@ -48,9 +54,15 @@ export default class WaspHiveSystem {
     }
   }
 
-  spawnOnDamage() {
-    if (this._hive.hp <= 0) return;
-    const w = new HunterWasp(this._scene, this._hive.x, this._hive.y);
+  onHiveDestroyed() {
+    if (this._hives.every(h => h.hp <= 0)) {
+      this._onDestroyed();
+    }
+  }
+
+  spawnOnDamage(hive) {
+    if (!hive || hive.hp <= 0) return;
+    const w = new HunterWasp(this._scene, hive.x, hive.y);
     w.setTarget(this._scene.player);
     if (Math.random() < WaspHiveSystem.powerChance(this._totalHoneyStolen)) {
       w.hp = 2; w._speedMult = 1.25;
@@ -59,72 +71,77 @@ export default class WaspHiveSystem {
   }
 
   update(time) {
-    if (this._hive.hp <= 0) return;
-    if (time - this._lastRegenAt < WASP_HIVE.REGEN_INTERVAL) return;
-    this._lastRegenAt = time;
-    this._hive.heal(WaspHiveSystem.regenAmount(this._totalHoneyStolen));
+    this._hives.forEach(h => {
+      if (h.hp <= 0) return;
+      if (time - this._lastRegenAt < WASP_HIVE.REGEN_INTERVAL) return;
+      h.heal(WaspHiveSystem.regenAmount(this._totalHoneyStolen));
+    });
+    if (time - this._lastRegenAt >= WASP_HIVE.REGEN_INTERVAL) {
+      this._lastRegenAt = time;
+    }
   }
 
   spawnWave(waveSpec) {
-    if (this._hive.hp <= 0) return;
-    const hx = this._hive.x;
-    const hy = this._hive.y;
-    const mult = WaspHiveSystem.countMult(this._totalHoneyStolen);
-    const hunterCount = Math.floor((waveSpec.hunterCount ?? 0) * mult);
-    const raiderCount = Math.floor((waveSpec.raiderCount ?? 0) * mult);
-    const pc = WaspHiveSystem.powerChance(this._totalHoneyStolen);
+    const activeHives = this._hives.filter(h => h.hp > 0);
+    if (!activeHives.length) return;
 
-    for (let i = 0; i < hunterCount; i++) {
-      const w = new HunterWasp(this._scene, hx, hy);
-      w.setTarget(this._scene.player);
-      if (Math.random() < pc) { w.hp = 2; w._speedMult = 1.25; }
-      this._scene.wasps.add(w);
-      if (Math.random() < 0.5) {
-        const rotDir = Math.random() < 0.5 ? 1 : -1;
-        const rotAmt = (Math.random() * (150 - 90) + 90) * Math.PI / 180 * rotDir;
-        const wp = WaspHiveSystem.calcFlankWaypoint(hx, hy, this._playerHiveX, this._playerHiveY, WORLD.WIDTH, WORLD.HEIGHT, rotAmt);
-        w.setFlankWaypoint(wp.x, wp.y);
+    activeHives.forEach(h => {
+      const hx = h.x, hy = h.y;
+      const mult = WaspHiveSystem.countMult(this._totalHoneyStolen);
+      const hunterCount  = Math.floor((waveSpec.hunterCount  ?? 0) * mult);
+      const raiderCount  = Math.floor((waveSpec.raiderCount  ?? 0) * mult);
+      const archerCount  = Math.floor((waveSpec.archerCount  ?? 0) * mult);
+      const pc = WaspHiveSystem.powerChance(this._totalHoneyStolen);
+
+      for (let i = 0; i < hunterCount; i++) {
+        const w = new HunterWasp(this._scene, hx, hy);
+        w.setTarget(this._scene.player);
+        if (Math.random() < pc) { w.hp = 2; w._speedMult = 1.25; }
+        this._scene.wasps.add(w);
+        if (Math.random() < 0.5) {
+          const rotDir = Math.random() < 0.5 ? 1 : -1;
+          const rotAmt = (Math.random() * (150 - 90) + 90) * Math.PI / 180 * rotDir;
+          const wp = WaspHiveSystem.calcFlankWaypoint(hx, hy, this._playerHiveX, this._playerHiveY, WORLD.WIDTH, WORLD.HEIGHT, rotAmt);
+          w.setFlankWaypoint(wp.x, wp.y);
+        }
       }
-    }
 
-    const archerCount = Math.floor((waveSpec.archerCount ?? 0) * mult);
-    for (let i = 0; i < archerCount; i++) {
-      const w = new ArcherWasp(this._scene, hx, hy);
-      w.setTarget(this._scene.player);
-      this._scene.wasps.add(w);
-    }
-
-    for (let i = 0; i < raiderCount; i++) {
-      const guardPosts = this._scene._towerList
-        ? this._scene._towerList.filter(t => t.towerType === 'guard' && t.active && t.hp > 0)
-        : [];
-      const target = guardPosts.length > 0 && Math.random() < 0.4
-        ? Phaser.Utils.Array.GetRandom(guardPosts)
-        : this._scene.hive;
-      const w = new RaiderWasp(this._scene, hx, hy, this._scene.hive, target, this._hive);
-      if (Math.random() < pc) { w.hp = 2; w._speedMult = 1.25; }
-      this._scene.wasps.add(w);
-      if (Math.random() < 0.5) {
-        const rotDir = Math.random() < 0.5 ? 1 : -1;
-        const rotAmt = (Math.random() * (150 - 90) + 90) * Math.PI / 180 * rotDir;
-        const wp = WaspHiveSystem.calcFlankWaypoint(hx, hy, this._playerHiveX, this._playerHiveY, WORLD.WIDTH, WORLD.HEIGHT, rotAmt);
-        w.setFlankWaypoint(wp.x, wp.y);
+      for (let i = 0; i < archerCount; i++) {
+        const w = new ArcherWasp(this._scene, hx, hy);
+        w.setTarget(this._scene.player);
+        this._scene.wasps.add(w);
       }
-    }
+
+      for (let i = 0; i < raiderCount; i++) {
+        const guardPosts = this._scene._towerList
+          ? this._scene._towerList.filter(t => t.towerType === 'guard' && t.active && t.hp > 0)
+          : [];
+        const target = guardPosts.length > 0 && Math.random() < 0.4
+          ? Phaser.Utils.Array.GetRandom(guardPosts)
+          : this._scene.hive;
+        const w = new RaiderWasp(this._scene, hx, hy, this._scene.hive, target, h);
+        if (Math.random() < pc) { w.hp = 2; w._speedMult = 1.25; }
+        this._scene.wasps.add(w);
+        if (Math.random() < 0.5) {
+          const rotDir = Math.random() < 0.5 ? 1 : -1;
+          const rotAmt = (Math.random() * (150 - 90) + 90) * Math.PI / 180 * rotDir;
+          const wp = WaspHiveSystem.calcFlankWaypoint(hx, hy, this._playerHiveX, this._playerHiveY, WORLD.WIDTH, WORLD.HEIGHT, rotAmt);
+          w.setFlankWaypoint(wp.x, wp.y);
+        }
+      }
+    });
   }
 
   _randomPosition(playerHiveX, playerHiveY) {
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       const x = Phaser.Math.Between(200, WORLD.WIDTH - 200);
       const y = Phaser.Math.Between(200, WORLD.HEIGHT - 200);
-      if (Phaser.Math.Distance.Between(x, y, playerHiveX, playerHiveY) >= 800) {
-        return { x, y };
-      }
+      const farFromPlayer = Phaser.Math.Distance.Between(x, y, playerHiveX, playerHiveY) >= 800;
+      const farFromOthers = this._hives.every(h => Phaser.Math.Distance.Between(x, y, h.x, h.y) >= 600);
+      if (farFromPlayer && farFromOthers) return { x, y };
     }
     return { x: 400, y: 400 };
   }
-
-  // --- Static pure helpers (testable without Phaser) ---
 
   static countMult(totalHoneyStolen) {
     return Math.min(3, 1 + Math.floor(totalHoneyStolen / 50) * 0.15);

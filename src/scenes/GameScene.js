@@ -137,8 +137,9 @@ export default class GameScene extends Phaser.Scene {
           }
         }
         if (!hasTarget) {
-          const wh = this.waspHiveSystem.hive;
-          if (wh.hp > 0 && Phaser.Math.Distance.Between(x, y, wh.x, wh.y) < range) hasTarget = true;
+          for (const wh of this.waspHiveSystem.hives) {
+            if (wh.hp > 0 && Phaser.Math.Distance.Between(x, y, wh.x, wh.y) < range) { hasTarget = true; break; }
+          }
         }
         if (!hasTarget) return false;
 
@@ -223,7 +224,7 @@ export default class GameScene extends Phaser.Scene {
 
     this._runDuration = TIMER.RUN_DURATION
       - (_u.QUICK_RUN_META ?? 0) * 60000
-      + (_u.LONG_RUN_META  ?? 0) * 60000;
+      + (_u.LONG_RUN_META  ?? 0) * 300000;
     this.waveManager = new WaveManager({
       firstWaveDelay: WAVE.FIRST_WAVE_DELAY,
       waveInterval: WAVE.WAVE_INTERVAL,
@@ -235,6 +236,7 @@ export default class GameScene extends Phaser.Scene {
       scene: this,
       playerHiveX: this.hiveX,
       playerHiveY: this.hiveY,
+      extraHives: _u.EXTRA_HIVES_META ?? 0,
       onDestroyed: () => this._endGame(true, true),
     });
 
@@ -268,15 +270,17 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
-    this.physics.add.overlap(this.waspHiveSystem.hive, this.stingers, (waspHive, stinger) => {
-      stinger.release();
-      this.waspHiveSystem.onHiveAttacked(this._gameTime);
-      if (waspHive.takeDamage(stinger.damage)) {
-        this._endGame(true, true);
-      }
+    this.waspHiveSystem.hives.forEach(wh => {
+      this.physics.add.overlap(wh, this.stingers, (waspHive, stinger) => {
+        stinger.release();
+        this.waspHiveSystem.onHiveAttacked(this._gameTime, waspHive);
+        if (waspHive.takeDamage(stinger.damage)) {
+          this.waspHiveSystem.onHiveDestroyed();
+        }
+      });
     });
 
-    this.physics.add.overlap(this.player, this.waspHiveSystem.hive, (player, waspHive) => {
+    this.physics.add.overlap(this.player, this.waspHiveSystem.hives, (player, waspHive) => {
       if (!player.isDashing) return;
       const now = this._gameTime;
       if (now - (waspHive._lastDashHit || 0) < 500) return;

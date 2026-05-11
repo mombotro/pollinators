@@ -404,12 +404,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.physics.world.resume();
 
-    const isSlowMode = this.buildMenu.visible || this._placing !== null;
-    const timeScale = isSlowMode ? 0.1 : 1.0;
-    this.physics.world.timeScale = 1 / timeScale;
-    this.time.timeScale = timeScale; // Scales the SAP_CONVERSION timer!
+    this.physics.world.timeScale = 1;
+    this.time.timeScale = 1;
 
-    const scaledDelta = delta * timeScale;
+    const scaledDelta = delta;
     this._gameTime += scaledDelta;
     this._playTime += scaledDelta;
 
@@ -434,13 +432,12 @@ export default class GameScene extends Phaser.Scene {
       if (aDown && !this._gpPlaceAWas) {
         if (this._ghost) this._placeTower(this._placing, this._ghost.x, this._ghost.y);
         this._cancelPlacement();
-        if (this.player) this.player._gpAWasDown = true;
       }
       this._gpPlaceAWas = aDown;
       const bDown = _pad.buttons[1]?.pressed ?? false;
       if (bDown && !this._gpPlaceBWas) {
         this._cancelPlacement();
-        if (this.player) { this.player._gpBWasDown = true; this.player._gpAWasDown = true; }
+        if (this.player) this.player._gpBWasDown = true;
       }
       this._gpPlaceBWas = bDown;
     }
@@ -872,6 +869,7 @@ export default class GameScene extends Phaser.Scene {
     if (this._ghost) { this._ghost.destroy(); this._ghost = null; }
     if (this._placeHint) { this._placeHint.destroy(); this._placeHint = null; }
     this._placing = null;
+    if (this.player) this.player._gpAWasDown = true;
     this.input.off('pointermove', this._onPlacementMove, this);
     this.input.off('pointerdown', this._onPlacementPlace, this);
   }

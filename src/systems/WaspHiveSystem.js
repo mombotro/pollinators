@@ -3,6 +3,7 @@ import { WASP_HIVE, WASP, WORLD, TOWER } from '../constants.js';
 import WaspHive from '../entities/WaspHive.js';
 import HunterWasp from '../entities/HunterWasp.js';
 import RaiderWasp from '../entities/RaiderWasp.js';
+import ArcherWasp from '../entities/ArcherWasp.js';
 
 export default class WaspHiveSystem {
   constructor({ scene, playerHiveX, playerHiveY, onDestroyed }) {
@@ -24,6 +25,10 @@ export default class WaspHiveSystem {
 
   onHoneyStolen(amount) {
     this._totalHoneyStolen += amount;
+  }
+
+  onPoisonDelivered(amount) {
+    this._totalHoneyStolen = Math.max(0, this._totalHoneyStolen - amount);
   }
 
   onHiveAttacked(time) {
@@ -80,6 +85,13 @@ export default class WaspHiveSystem {
         const wp = WaspHiveSystem.calcFlankWaypoint(hx, hy, this._playerHiveX, this._playerHiveY, WORLD.WIDTH, WORLD.HEIGHT, rotAmt);
         w.setFlankWaypoint(wp.x, wp.y);
       }
+    }
+
+    const archerCount = Math.floor((waveSpec.archerCount ?? 0) * mult);
+    for (let i = 0; i < archerCount; i++) {
+      const w = new ArcherWasp(this._scene, hx, hy);
+      w.setTarget(this._scene.player);
+      this._scene.wasps.add(w);
     }
 
     for (let i = 0; i < raiderCount; i++) {

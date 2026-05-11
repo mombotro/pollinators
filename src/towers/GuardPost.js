@@ -4,9 +4,10 @@ import GuardBee from '../entities/GuardBee.js';
 
 export default class GuardPost extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'guard-post');
+    super(scene, x, y, 'misc', 0);
     scene.add.existing(this);
     scene.physics.add.existing(this);
+    this.setScale(0.1);
     this.body.setImmovable(true);
     this.towerType = 'guard';
     this.hp = TOWER.GUARD_POST_HP;
@@ -21,7 +22,7 @@ export default class GuardPost extends Phaser.Physics.Arcade.Sprite {
     this.setTint(0xff4444);
     this.scene.time.delayedCall(150, () => {
       if (!this.active) return;
-      if (this.hp <= 0) this.setTint(0x222222);
+      if (this.hp <= 0) { this.setFrame(1); this.clearTint(); }
       else this.clearTint();
     });
     if (this.hp <= 0) {

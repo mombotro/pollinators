@@ -17,8 +17,10 @@ export default class WaveManager {
     const n = this._waveNumber;
     const total = this._baseCount + (n - 1) * this._countIncrement;
     const raiderCount = n >= 3 ? Math.floor(total * 0.4) : 0;
+    const archerCount = n >= 4 ? Math.max(1, Math.floor(total * 0.2)) : 0;
+    const hunterCount = Math.max(0, total - raiderCount - archerCount);
 
-    return { number: n, hunterCount: total - raiderCount, raiderCount };
+    return { number: n, hunterCount, raiderCount, archerCount };
   }
 
   getWaveNumber() { return this._waveNumber; }

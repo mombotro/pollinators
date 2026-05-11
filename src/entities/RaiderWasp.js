@@ -24,6 +24,10 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
 
   retreat() {
     this.isRetreating = true;
+    if ((this.honeyCarried > 0 || this.poisonCarried) && this._waspHive) {
+      this.retreatTarget = { x: this._waspHive.x, y: this._waspHive.y };
+      return;
+    }
     if (this._waspHive) {
       this.retreatTarget = { x: this._waspHive.x, y: this._waspHive.y };
     } else {
@@ -47,6 +51,13 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    if (this._poisonTarget && this._poisonTarget.active && !this.isRetreating) {
+      const baseSpeed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
+      const speed = time < this.slowedUntil ? baseSpeed * TOWER.RESIN_TRAP_SLOW : baseSpeed;
+      this._movePhysics(this._poisonTarget.x, this._poisonTarget.y, speed);
+      return;
+    }
+
     if (this.isRetreating && this.retreatTarget) {
       const baseSpeed = WASP.RAIDER_SPEED * (this._speedMult ?? 1);
       const speed = time < this.slowedUntil
@@ -56,6 +67,8 @@ export default class RaiderWasp extends Phaser.Physics.Arcade.Sprite {
       if (Phaser.Math.Distance.Between(this.x, this.y, this.retreatTarget.x, this.retreatTarget.y) < 50) {
         if (this.honeyCarried > 0 && this.scene.waspHiveSystem) {
           this.scene.waspHiveSystem.onHoneyStolen(this.honeyCarried);
+        } else if (this.poisonCarried && this.scene.waspHiveSystem) {
+          this.scene.waspHiveSystem.onPoisonDelivered(TOWER.POISON_HONEY_DAMAGE);
         }
         this.destroy();
       }

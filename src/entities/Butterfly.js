@@ -3,7 +3,8 @@ import { BUTTERFLY, FLOWER } from '../constants.js';
 
 export default class Butterfly extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'butterfly');
+    super(scene, x, y, 'misc', 5);
+    this.setScale(0.05);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);

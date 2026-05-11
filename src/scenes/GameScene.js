@@ -26,6 +26,8 @@ import Butterfly from '../entities/Butterfly.js';
 import Spider from '../entities/Spider.js';
 import WebTrap from '../entities/WebTrap.js';
 import SoldierBee from '../entities/SoldierBee.js';
+import PoisonHoney from '../towers/PoisonHoney.js';
+import ArcherWasp from '../entities/ArcherWasp.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('GameScene'); }
@@ -69,6 +71,7 @@ export default class GameScene extends Phaser.Scene {
     this.breakables = this.physics.add.group();
     this._towerList = [];
     this.soldiers = this.physics.add.group();
+    this.enemyStingers = this.physics.add.group();
     this.butterflies = this.physics.add.group();
     this.spiders = this.physics.add.group();
     this._webList = [];
@@ -172,6 +175,24 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.physics.add.collider(this.wasps, this.wasps);
+
+    this.physics.add.overlap(this.player, this.enemyStingers, (player, stinger) => {
+      stinger.release();
+      if (!player.alive) return;
+      if (player.takeDamage(stinger.damage)) this._onPlayerDeath();
+    });
+
+    this.physics.add.overlap(this.workers, this.enemyStingers, (worker, stinger) => {
+      if (!worker.alive) return;
+      stinger.release();
+      worker.takeDamage(stinger.damage);
+    });
+
+    this.physics.add.overlap(this.soldiers, this.enemyStingers, (soldier, stinger) => {
+      if (!soldier.alive) return;
+      stinger.release();
+      soldier.takeDamage(stinger.damage);
+    });
 
     this.waveManager = new WaveManager({
       firstWaveDelay: WAVE.FIRST_WAVE_DELAY,
@@ -355,6 +376,26 @@ export default class GameScene extends Phaser.Scene {
     this.pollination.update(this._gameTime);
     this.flowers.getChildren().forEach(f => f.update(this._gameTime));
     if (this.player.alive) this.player.update(this._gameTime, scaledDelta);
+
+    // Poison honey attraction
+    this._towerList.forEach(tower => {
+      if (tower.towerType !== 'poison-honey' || !tower.active) return;
+      this.wasps.getChildren().forEach(wasp => {
+        if (!wasp.active || wasp.isRetreating || wasp.poisonCarried) return;
+        const dist = Phaser.Math.Distance.Between(wasp.x, wasp.y, tower.x, tower.y);
+        if (dist < TOWER.POISON_HONEY_RADIUS) {
+          wasp._poisonTarget = tower;
+        } else if (wasp._poisonTarget === tower) {
+          wasp._poisonTarget = null;
+        }
+        if (dist < 40) {
+          tower.consume();
+          wasp.poisonCarried = true;
+          wasp._poisonTarget = null;
+          wasp.retreat();
+        }
+      });
+    });
 
     this.wasps.getChildren().forEach(w => w.update(this._gameTime, windVec));
 
@@ -574,7 +615,13 @@ export default class GameScene extends Phaser.Scene {
 
   _enterPlacementMode(towerKey) {
     this._placing = towerKey;
-    this._ghost = this.add.image(0, 0, towerKey).setAlpha(0.5).setDepth(50);
+    const ghostMap = {
+      'guard-post':   { key: 'misc', frame: 0, scale: 0.1  },
+      'resin-trap':   { key: 'misc', frame: 8, scale: 0.1  },
+      'poison-honey': { key: 'misc', frame: 9, scale: 0.08 },
+    };
+    const gi = ghostMap[towerKey] || { key: towerKey, frame: 0, scale: 1 };
+    this._ghost = this.add.image(0, 0, gi.key, gi.frame).setAlpha(0.5).setDepth(50).setScale(gi.scale);
     this.input.on('pointermove', this._onPlacementMove, this);
     this.input.once('pointerdown', this._onPlacementPlace, this);
     this.input.keyboard.addKey('ESC').once('down', () => this._cancelPlacement());
@@ -603,13 +650,15 @@ export default class GameScene extends Phaser.Scene {
 
   _placeTower(key, x, y) {
     const costs = {
-      'resin-trap':  TOWER.RESIN_TRAP_COST,
-      'guard-post':  TOWER.GUARD_POST_COST,
+      'resin-trap':   TOWER.RESIN_TRAP_COST,
+      'guard-post':   TOWER.GUARD_POST_COST,
+      'poison-honey': TOWER.POISON_HONEY_COST,
     };
     if (!this.resources.spendHoney(costs[key])) return;
     let tower;
     if (key === 'resin-trap') tower = new ResinTrap(this, x, y);
     else if (key === 'guard-post') tower = new GuardPost(this, x, y);
+    else if (key === 'poison-honey') tower = new PoisonHoney(this, x, y);
     if (tower) this._towerList.push(tower);
   }
 
@@ -686,13 +735,19 @@ export default class GameScene extends Phaser.Scene {
     btnHunter.on('pointerout',  () => btnHunter.setColor('#ffffff'));
     btnHunter.on('pointerdown', () => this._spawnPlaygroundWasp('hunter'));
 
-    const btnRaider = this.add.text(640, 660, '[ Spawn Raider ]', s)
+    const btnRaider = this.add.text(590, 660, '[ Spawn Raider ]', s)
       .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
     btnRaider.on('pointerover', () => btnRaider.setColor('#ff6600'));
     btnRaider.on('pointerout',  () => btnRaider.setColor('#ffffff'));
     btnRaider.on('pointerdown', () => this._spawnPlaygroundWasp('raider'));
 
-    const btnHoney = this.add.text(850, 660, '[ Max Honey ]', s)
+    const btnArcher = this.add.text(760, 660, '[ Spawn Archer ]', s)
+      .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
+    btnArcher.on('pointerover', () => btnArcher.setColor('#aa44ff'));
+    btnArcher.on('pointerout',  () => btnArcher.setColor('#ffffff'));
+    btnArcher.on('pointerdown', () => this._spawnPlaygroundWasp('archer'));
+
+    const btnHoney = this.add.text(930, 660, '[ Max Honey ]', s)
       .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
     btnHoney.on('pointerover', () => btnHoney.setColor('#ffdd00'));
     btnHoney.on('pointerout',  () => btnHoney.setColor('#ffffff'));
@@ -701,7 +756,7 @@ export default class GameScene extends Phaser.Scene {
       this.resources.addHoney(cap);
     });
 
-    const btnBack = this.add.text(1060, 660, '[ Exit ]', s)
+    const btnBack = this.add.text(1100, 660, '[ Exit ]', s)
       .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
     btnBack.on('pointerover', () => btnBack.setColor('#ff4444'));
     btnBack.on('pointerout',  () => btnBack.setColor('#ffffff'));
@@ -715,8 +770,12 @@ export default class GameScene extends Phaser.Scene {
       const w = new HunterWasp(this, hx, hy);
       w.setTarget(this.player);
       this.wasps.add(w);
-    } else {
+    } else if (type === 'raider') {
       const w = new RaiderWasp(this, hx, hy, this.hive, this.hive, this.waspHiveSystem.hive);
+      this.wasps.add(w);
+    } else if (type === 'archer') {
+      const w = new ArcherWasp(this, hx, hy);
+      w.setTarget(this.player);
       this.wasps.add(w);
     }
   }

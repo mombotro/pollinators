@@ -92,6 +92,10 @@ export const TOWER = {
   GUARD_BEE_RANGE: 120,
   GUARD_BEE_DAMAGE: 1,
   GUARD_BEE_RATE: 900,         // ms between guard bee shots
+  POISON_HONEY_COST: 20,
+  POISON_HONEY_USES: 3,
+  POISON_HONEY_RADIUS: 200,    // attraction radius for wasps
+  POISON_HONEY_DAMAGE: 5,      // honey stolen reduced per delivery
 };
 
 export const UPGRADE = {
@@ -139,6 +143,16 @@ export const SOLDIER = {
   FIRE_RATE: 1000,   // ms between shots
   COST: 35,          // honey to recruit
   HP: 4,
+};
+
+export const ARCHER_WASP = {
+  SPEED: 100,
+  HP: 2,
+  ATTACK_RANGE: 220,
+  MIN_RANGE: 120,
+  FIRE_RATE: 1800,
+  DAMAGE: 1,
+  STINGER_SPEED: 280,
 };
 
 export const WASP_HIVE = {

@@ -38,6 +38,24 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    if (this._poisonTarget && this._poisonTarget.active && !this.isRetreating) {
+      const baseSpeed = WASP.HUNTER_SPEED * (this._speedMult ?? 1);
+      const speed = time < this.slowedUntil ? baseSpeed * TOWER.RESIN_TRAP_SLOW : baseSpeed;
+      this.setMaxVelocity(speed, speed);
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, this._poisonTarget.x, this._poisonTarget.y);
+      if (dist > 5) {
+        const ax = (this._poisonTarget.x - this.x) / dist;
+        const ay = (this._poisonTarget.y - this.y) / dist;
+        this.setAcceleration(ax * speed * 10, ay * speed * 10);
+      } else {
+        this.setAcceleration(0, 0);
+      }
+      if (this.body.velocity.lengthSq() > 10) {
+        this.rotation = Phaser.Math.Angle.RotateTo(this.rotation, this.body.velocity.angle() + Math.PI / 2, 0.15);
+      }
+      return;
+    }
+
     if (this.isRetreating && this.retreatTarget) {
       const baseSpeed = WASP.HUNTER_SPEED * (this._speedMult ?? 1);
       const speed = time < this.slowedUntil
@@ -55,6 +73,11 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
       if (this.honeyCarried > 0) {
         if (dist < 50) {
           this.scene.waspHiveSystem.onHoneyStolen(this.honeyCarried);
+          this.destroy();
+        }
+      } else if (this.poisonCarried) {
+        if (dist < 50) {
+          this.scene.waspHiveSystem.onPoisonDelivered(TOWER.POISON_HONEY_DAMAGE);
           this.destroy();
         }
       } else if (this.x < -200 || this.x > 3000 || this.y < -200 || this.y > 2000) {
@@ -125,7 +148,7 @@ export default class HunterWasp extends Phaser.Physics.Arcade.Sprite {
 
   retreat() {
     this.isRetreating = true;
-    if (this.honeyCarried > 0 && this.scene.waspHiveSystem) {
+    if ((this.honeyCarried > 0 || this.poisonCarried) && this.scene.waspHiveSystem) {
       const wh = this.scene.waspHiveSystem.hive;
       this.retreatTarget = { x: wh.x, y: wh.y };
     } else {

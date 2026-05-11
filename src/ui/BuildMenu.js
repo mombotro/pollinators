@@ -1,5 +1,6 @@
 import { TOWER, WORKER, SOLDIER } from '../constants.js';
 
+
 export default class BuildMenu {
   constructor(scene, onSelect) {
     this._scene = scene;
@@ -8,17 +9,18 @@ export default class BuildMenu {
     const s = { fontSize: '17px', color: '#ffd700', stroke: '#000', strokeThickness: 3 };
     const hs = { ...s, fontSize: '20px', color: '#ffffff' };
 
-    this._bg = scene.add.rectangle(640, 380, 440, 270, 0x000000, 0.85)
+    this._bg = scene.add.rectangle(640, 380, 440, 306, 0x000000, 0.85)
       .setScrollFactor(0).setDepth(200);
 
     this._title = scene.add.text(640, 270, 'BUILD  (B to close)', hs)
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(201);
 
     const items = [
-      { key: 'resin-trap',     label: `Resin Trap  ${TOWER.RESIN_TRAP_COST}h`  },
-      { key: 'guard-post',     label: `Guard Post  ${TOWER.GUARD_POST_COST}h`  },
-      { key: 'recruit-worker',  label: `Recruit Worker  ${WORKER.COST}h`   },
-      { key: 'recruit-soldier', label: `Recruit Soldier  ${SOLDIER.COST}h` },
+      { key: 'resin-trap',     label: `Resin Trap  ${TOWER.RESIN_TRAP_COST}h`       },
+      { key: 'guard-post',     label: `Guard Post  ${TOWER.GUARD_POST_COST}h`       },
+      { key: 'poison-honey',   label: `Poison Honey  ${TOWER.POISON_HONEY_COST}h`   },
+      { key: 'recruit-worker',  label: `Recruit Worker  ${WORKER.COST}h`            },
+      { key: 'recruit-soldier', label: `Recruit Soldier  ${SOLDIER.COST}h`          },
     ];
 
     this._buttons = items.map((item, i) => {

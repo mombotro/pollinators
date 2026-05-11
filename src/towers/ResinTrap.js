@@ -3,9 +3,10 @@ import { TOWER } from '../constants.js';
 
 export default class ResinTrap extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'resin-trap');
+    super(scene, x, y, 'misc', 8);
     scene.add.existing(this);
     scene.physics.add.existing(this);
+    this.setScale(0.1);
     this.body.setImmovable(true);
     this.towerType = 'resin';
     this._uses = TOWER.RESIN_TRAP_USES;

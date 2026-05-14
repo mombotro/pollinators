@@ -31,8 +31,8 @@ export default class Butterfly extends Phaser.Physics.Arcade.Sprite {
       this._nextTurn = time + BUTTERFLY.DIRECTION_CHANGE + Phaser.Math.Between(-1500, 1500);
     }
 
-    // Flee player
-    if (player.alive) {
+    // Flee player (not when tethered to a fountain)
+    if (player.alive && !this._fountain) {
       const d = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
       if (d < BUTTERFLY.FLEE_RADIUS) {
         this._angle = Phaser.Math.Angle.Between(player.x, player.y, this.x, this.y);

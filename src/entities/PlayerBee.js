@@ -95,8 +95,12 @@ export default class PlayerBee extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.setMaxVelocity(this._speed, this._speed);
       this._move();
+      // Per-axis maxVelocity allows diagonal speed = speed*√2 — clamp by magnitude instead
+      const vel = this.body.velocity;
+      const spd = vel.length();
+      if (spd > this._speed) vel.scale(this._speed / spd);
     }
-    
+
     this._autoFire(time);
   }
 

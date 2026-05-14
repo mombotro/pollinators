@@ -51,6 +51,7 @@ export default class BuildMenu {
     this._visible = true;
     this._gpIdx = 0;
     [this._bg, this._title, ...this._buttons].forEach(o => o.setVisible(true));
+    this._buttons.forEach(b => b.setInteractive());
     this._refreshAffordability();
     this._gpRefresh();
   }
@@ -58,6 +59,7 @@ export default class BuildMenu {
   hide() {
     this._visible = false;
     [this._bg, this._title, ...this._buttons].forEach(o => o.setVisible(false));
+    this._buttons.forEach(b => b.disableInteractive());
   }
 
   get visible() { return this._visible; }

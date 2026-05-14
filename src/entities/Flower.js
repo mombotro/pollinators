@@ -40,7 +40,9 @@ export default class Flower extends Phaser.Physics.Arcade.Sprite {
         break;
 
       case STATE.MATURE:
-        if (this.sapRemaining <= 0 || time >= this._matureAt + this._typeDef.lifespan) {
+        if (this.sapRemaining <= 0) {
+          this._enterDead();
+        } else if (time >= this._matureAt + this._typeDef.lifespan) {
           this._enterOld(time);
         }
         break;

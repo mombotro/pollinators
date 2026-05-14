@@ -431,15 +431,24 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.timeScale = 1;
     this.time.timeScale = 1;
 
-    // Placement mode — game runs, ghost follows player for controller
+    // Placement mode — ghost follows player at player+70
     if (this._placing !== null) {
-      if (this._ghost && this.player) {
-        this._ghost.setPosition(this.player.x + 70, this.player.y);
+      if (this._ghost) {
+        if (this.player) {
+          this._ghost.setPosition(this.player.x + 70, this.player.y);
+        }
+        const gx = this._ghost.x, gy = this._ghost.y;
+        const margin = 30;
+        const valid = gx >= margin && gx <= WORLD.WIDTH - margin &&
+                      gy >= margin && gy <= WORLD.HEIGHT - margin &&
+                      Phaser.Math.Distance.Between(gx, gy, this.hiveX, this.hiveY) >= 100;
+        this._ghost.setTint(valid ? 0xffffff : 0xff4444);
+        this._ghost.setAlpha(valid ? 0.55 : 0.45);
       }
       if (_pad) {
         const aDown = _pad.buttons[0]?.pressed ?? false;
         if (aDown && !this._gpPlaceAWas) {
-          if (this._ghost) this._placeTower(this._placing, this._ghost.x, this._ghost.y);
+          if (this._ghost && this._isGhostValid()) this._placeTower(this._placing, this._ghost.x, this._ghost.y);
           this._cancelPlacement();
         }
         this._gpPlaceAWas = aDown;
@@ -745,8 +754,8 @@ export default class GameScene extends Phaser.Scene {
         .setFlipX(Math.random() < 0.5)
         .setCrop(4, 4, 392, 392)
         .setDepth(DEPTH.ENVIRONMENT);
+      this.time.delayedCall(FLOWER.GRASS_DURATION, () => { grassImg.destroy(); });
       this.time.delayedCall(FLOWER.RESPAWN_DELAY, () => {
-        grassImg.destroy();
         if (!this._ended) {
           const rx = Phaser.Math.Between(100, WORLD.WIDTH - 100);
           const ry = Phaser.Math.Between(100, WORLD.HEIGHT - 100);
@@ -892,9 +901,24 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.addKey('ESC').once('down', () => this._cancelPlacement());
   }
 
+  _isGhostValid() {
+    if (!this._ghost) return false;
+    const margin = 30;
+    return this._ghost.x >= margin && this._ghost.x <= WORLD.WIDTH - margin &&
+           this._ghost.y >= margin && this._ghost.y <= WORLD.HEIGHT - margin &&
+           Phaser.Math.Distance.Between(this._ghost.x, this._ghost.y, this.hiveX, this.hiveY) >= 100;
+  }
+
   _onPlacementPlace(pointer) {
-    const wx = this.cameras.main.scrollX + pointer.x;
-    const wy = this.cameras.main.scrollY + pointer.y;
+    const wx = this._ghost ? this._ghost.x : pointer.worldX;
+    const wy = this._ghost ? this._ghost.y : pointer.worldY;
+    const margin = 30;
+    if (wx < margin || wx > WORLD.WIDTH - margin || wy < margin || wy > WORLD.HEIGHT - margin ||
+        Phaser.Math.Distance.Between(wx, wy, this.hiveX, this.hiveY) < 100) {
+      // Re-register so player can try again
+      this.input.once('pointerdown', this._onPlacementPlace, this);
+      return;
+    }
     this._placeTower(this._placing, wx, wy);
     this._cancelPlacement();
   }

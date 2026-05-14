@@ -59,6 +59,7 @@ export const FLOWER = {
   YOUNG_DURATION:  3000,   // ms in YOUNG state before sap is collectible
   OLD_DURATION:    5000,   // ms in OLD state before flower dies
   RESPAWN_DELAY:  10000,   // ms after death before a new flower spawns elsewhere
+  GRASS_DURATION:  1500,   // ms grass sprite lingers after flower picked clean
   AROMATIC_RADIUS: 180,    // px — butterfly attraction radius for AROMATIC flowers
 };
 

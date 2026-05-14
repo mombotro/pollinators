@@ -10,11 +10,13 @@ export default class GameOverScene extends Phaser.Scene {
     this.waves            = data.waves            ?? 0;
     this.timeSurvived     = data.timeSurvived     ?? 0;
     this.wonByDestruction = data.wonByDestruction ?? false;
+    this.playground       = data.playground       ?? false;
 
-    const earned = this.wonByDestruction
-      ? 300 + Math.round(200 * Math.max(0, 1 - this.timeSurvived / 600)) + Math.floor(this.score / 10)
-      : Math.floor(this.score / 10);
-    MetaSave.addJelly(earned);
+    const earned = this.playground ? 0
+      : this.wonByDestruction
+        ? 300 + Math.round(200 * Math.max(0, 1 - this.timeSurvived / 600)) + Math.floor(this.score / 10)
+        : Math.floor(this.score / 10);
+    if (!this.playground) MetaSave.addJelly(earned);
     this.earned = earned;
 
     const s = MetaSave.load();
@@ -54,9 +56,11 @@ export default class GameOverScene extends Phaser.Scene {
       this.add.text(cx, 300, `Time: ${mins}:${secs}`, s28).setOrigin(0.5);
     }
 
-    this.add.text(cx, 360, `+${this.earned} Royal Jelly`, {
-      fontSize: '36px', color: '#ffcc00', fontStyle: 'bold',
-    }).setOrigin(0.5);
+    if (!this.playground) {
+      this.add.text(cx, 360, `+${this.earned} Royal Jelly`, {
+        fontSize: '36px', color: '#ffcc00', fontStyle: 'bold',
+      }).setOrigin(0.5);
+    }
 
     this.add.text(cx, 420, `All-time high score: ${this.highScore}`, {
       fontSize: '24px', color: '#aaaaaa',

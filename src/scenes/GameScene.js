@@ -1108,7 +1108,7 @@ export default class GameScene extends Phaser.Scene {
     const score = this._calculateScore();
     const waves = this.waveManager.getWaveNumber();
     const timeSurvived = Math.floor(this._playTime / 1000);
-    this.scene.start('GameOverScene', { won, score, waves, timeSurvived, wonByDestruction });
+    this.scene.start('GameOverScene', { won, score, waves, timeSurvived, wonByDestruction, playground: this._playground ?? false });
   }
 
   _calculateScore() {

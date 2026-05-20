@@ -1023,24 +1023,42 @@ export default class GameScene extends Phaser.Scene {
   _createPlaygroundUI() {
     const s  = { fontSize: '20px', color: '#ffffff', stroke: '#000000', strokeThickness: 4, fontFamily: 'monospace' };
     const hs = { ...s, fontSize: '16px', color: '#ffdd44' };
+    const ws = { ...s, fontSize: '14px', color: '#aaffaa' };
 
     this.add.text(640, 16, 'PLAYGROUND  (RB=cycle  X=select)', hs)
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(200);
 
+    this._pgWavePresets = [
+      { label: 'Easy',   wave: 1   },
+      { label: 'Normal', wave: 5   },
+      { label: 'Hard',   wave: 10  },
+      { label: 'Brutal', wave: 20  },
+      { label: 'Insane', wave: 50  },
+      { label: 'ULTRA',  wave: 100 },
+    ];
+    this._pgWaveIdx = 0;
+
+    this._pgWaveInfoText = this.add.text(640, 676, '', ws)
+      .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200);
+
     const pgDefs = [
-      { x: 380, label: '[ Spawn Hunter ]', action: () => this._spawnPlaygroundWasp('hunter') },
-      { x: 560, label: '[ Spawn Raider ]', action: () => this._spawnPlaygroundWasp('raider') },
-      { x: 740, label: '[ Spawn Archer ]', action: () => this._spawnPlaygroundWasp('archer') },
-      { x: 910, label: '[ Max Honey ]',    action: () => this.resources.addHoney(this.resources.getHoneyStorage()) },
-      { x: 1060, label: '[ Exit ]',        action: () => this.scene.start('MenuScene') },
+      { x: 380,  y: 660, label: '[ Spawn Hunter ]', action: () => this._spawnPlaygroundWasp('hunter') },
+      { x: 560,  y: 660, label: '[ Spawn Raider ]', action: () => this._spawnPlaygroundWasp('raider') },
+      { x: 740,  y: 660, label: '[ Spawn Archer ]', action: () => this._spawnPlaygroundWasp('archer') },
+      { x: 910,  y: 660, label: '[ Max Honey ]',    action: () => this.resources.addHoney(this.resources.getHoneyStorage()) },
+      { x: 1060, y: 660, label: '[ Exit ]',         action: () => this.scene.start('MenuScene') },
+      { x: 510,  y: 700, label: '[ < ]',            action: () => this._cycleWave(-1) },
+      { x: 640,  y: 700, label: '[ Spawn Wave: Easy ]', action: () => this._spawnPlaygroundWave(), isWaveBtn: true },
+      { x: 770,  y: 700, label: '[ > ]',            action: () => this._cycleWave(1) },
     ];
 
-    this._pgBtns    = pgDefs.map(({ x, label, action }) => {
-      const b = this.add.text(x, 660, label, s)
+    this._pgBtns    = pgDefs.map(d => {
+      const b = this.add.text(d.x, d.y, d.label, s)
         .setOrigin(0.5, 1).setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
       b.on('pointerover',  () => b.setColor('#ffaa00'));
       b.on('pointerout',   () => b.setColor('#ffffff'));
-      b.on('pointerdown',  action);
+      b.on('pointerdown',  d.action);
+      if (d.isWaveBtn) this._pgWaveBtn = b;
       return b;
     });
     this._pgActions  = pgDefs.map(d => d.action);
@@ -1048,7 +1066,33 @@ export default class GameScene extends Phaser.Scene {
     this._pgGpLBWas  = false;
     this._pgGpRBWas  = false;
     this._pgGpXWas   = false;
+    this._updatePgWaveDisplay();
     this._pgRefresh();
+  }
+
+  _updatePgWaveDisplay() {
+    const preset = this._pgWavePresets[this._pgWaveIdx];
+    const spec   = this._waveSpecFromLevel(preset.wave);
+    this._pgWaveBtn?.setText(`[ Spawn Wave: ${preset.label} ]`);
+    this._pgWaveInfoText?.setText(`Lv.${preset.wave} — ${spec.hunterCount} hunters  ${spec.raiderCount} raiders  ${spec.archerCount} archers`);
+  }
+
+  _cycleWave(dir) {
+    this._pgWaveIdx = (this._pgWaveIdx + dir + this._pgWavePresets.length) % this._pgWavePresets.length;
+    this._updatePgWaveDisplay();
+  }
+
+  _waveSpecFromLevel(n) {
+    const total       = WAVE.BASE_COUNT + (n - 1) * WAVE.COUNT_INCREMENT;
+    const raiderCount = n >= 3  ? Math.floor(total * 0.4)      : 0;
+    const archerCount = n >= 4  ? Math.max(1, Math.floor(total * 0.2)) : 0;
+    const hunterCount = Math.max(0, total - raiderCount - archerCount);
+    return { number: n, hunterCount, raiderCount, archerCount };
+  }
+
+  _spawnPlaygroundWave() {
+    const preset = this._pgWavePresets[this._pgWaveIdx];
+    this.waspHiveSystem.spawnWave(this._waveSpecFromLevel(preset.wave));
   }
 
   _pgRefresh() {

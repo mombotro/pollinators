@@ -63,4 +63,28 @@ describe('MetaSave', () => {
     expect(s.jellyBalance).toBe(0);
     expect(s.upgrades.BEE_SPEED_META).toBe(0);
   });
+
+  describe('buildable unlock keys', () => {
+    it('load() defaults all unlock keys to 0', () => {
+      const s = MetaSave.load();
+      expect(s.upgrades.UNLOCK_RESIN_TRAP).toBe(0);
+      expect(s.upgrades.UNLOCK_GUARD_POST).toBe(0);
+      expect(s.upgrades.UNLOCK_POISON_HONEY).toBe(0);
+      expect(s.upgrades.UNLOCK_NECTAR_FOUNTAIN).toBe(0);
+      expect(s.upgrades.UNLOCK_RECRUIT_SOLDIER).toBe(0);
+    });
+
+    it('purchaseUpgrade sets unlock key to 1', () => {
+      MetaSave.addJelly(200);
+      MetaSave.purchaseUpgrade('UNLOCK_RESIN_TRAP', 50);
+      expect(MetaSave.load().upgrades.UNLOCK_RESIN_TRAP).toBe(1);
+    });
+
+    it('reset() clears unlock keys back to 0', () => {
+      MetaSave.addJelly(200);
+      MetaSave.purchaseUpgrade('UNLOCK_RESIN_TRAP', 50);
+      MetaSave.reset();
+      expect(MetaSave.load().upgrades.UNLOCK_RESIN_TRAP).toBe(0);
+    });
+  });
 });

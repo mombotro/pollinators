@@ -423,6 +423,23 @@ export default class GameScene extends Phaser.Scene {
 
     if (this._paused) {
       if (_pad) this._updatePauseGamepad(_pad);
+      // Keyboard nav for pause menu
+      if (this._pauseCtrlObjs) {
+        if (Phaser.Input.Keyboard.JustDown(this._menuCursors.left) ||
+            Phaser.Input.Keyboard.JustDown(this._menuCursors.right)) {
+          this._hidePauseControls();
+        }
+      } else if (this._pauseBtns) {
+        const upJD    = Phaser.Input.Keyboard.JustDown(this._menuCursors.up);
+        const downJD  = Phaser.Input.Keyboard.JustDown(this._menuCursors.down);
+        const enterJD = Phaser.Input.Keyboard.JustDown(this._enterKey);
+        if (upJD || downJD) {
+          const dy = upJD ? -1 : 1;
+          this._pauseSelIdx = (this._pauseSelIdx + dy + this._pauseBtns.length) % this._pauseBtns.length;
+          this._gpRefreshPause();
+        }
+        if (enterJD) this._pauseActions[this._pauseSelIdx]?.();
+      }
       return;
     }
 
